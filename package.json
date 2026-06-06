@@ -1,0 +1,41 @@
+{
+  "name": "react-chess-replay-trainer",
+  "version": "0.0.1",
+  "description": "React component for browsing a chess game and drilling its moves, reporting misses (depends on react-chess-core only)",
+  "license": "MIT",
+  "author": "Robert Blackwell",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "rollup": "^4.22.2",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "^5.6.2"
+  },
+  "peerDependencies": {
+    "chess.js": "^1.0.0-beta.8",
+    "react": "^18.3.1",
+    "react-chess-core": "^0.1.0",
+    "react-chessboard": "^4.7.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "chess.js": "^1.0.0-beta.8",
+    "react": "^18.3.1",
+    "react-chess-core": "file:../react-chess-core",
+    "react-chessboard": "^4.7.1",
+    "react-dom": "^18.3.1",
+    "tslib": "^2.8.1"
+  }
+}
