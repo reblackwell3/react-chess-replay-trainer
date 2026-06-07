@@ -22,8 +22,6 @@ export interface ReplayTrainerProps {
   orientation?: 'white' | 'black';
 }
 
-const EXPECTED_ARROW_COLOR = '#e6912c';
-
 const TRAIN_COLOR_LABEL: Record<'white' | 'black' | 'both', string> = {
   white: 'Training White',
   black: 'Training Black',
@@ -93,7 +91,7 @@ export const ReplayTrainer = ({
           [
             state.expectedUci.slice(0, 2),
             state.expectedUci.slice(2, 4),
-            EXPECTED_ARROW_COLOR,
+            colors.primary,
           ],
         ]
       : [];
@@ -192,7 +190,7 @@ export const ReplayTrainer = ({
         </div>
 
         <div style={{ color: colors.subtle, fontSize: 13, textAlign: 'center' }}>
-          Move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.total)} of{' '}
+          Half move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.total)} of{' '}
           {state.total}
           {training && !state.complete && (
             <>
