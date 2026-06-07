@@ -8,6 +8,8 @@ export type ReplayGame = {
   whiteElo?: number;
   blackElo?: number;
   result?: string;
+  timeControl?: string;
+  timeClass?: string;
   movesUci: string[];
   movesSan?: string[];
 };
