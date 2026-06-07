@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { ChessboardDnDProvider } from 'react-chessboard';
-import { HighlightChessboard, ThemeProvider } from 'react-chess-core';
+import {
+  AnalysisBoard,
+  AnalysisErrorBoundary,
+  HighlightChessboard,
+  ThemeProvider,
+  type AnalysisContext,
+  type AnalysisEngineOptions,
+} from 'react-chess-core';
+import { buildReplayAnalysisContext } from './buildReplayAnalysisContext';
 import { DEFAULT_BOARD_WIDTH } from './constants';
 import { useReplayTrainer } from './hooks/useReplayTrainer';
 import type { ReplayGame, ReplayMiss } from './types';
@@ -20,6 +28,8 @@ export interface ReplayTrainerProps {
   boardWidth?: number;
   /** Side shown at the bottom of the board. Defaults to white. */
   orientation?: 'white' | 'black';
+  /** Stockfish options for the built-in analysis board. Set `enabled: false` to hide engine lines. */
+  engine?: AnalysisEngineOptions;
 }
 
 const TRAIN_COLOR_LABEL: Record<'white' | 'black' | 'both', string> = {
@@ -53,9 +63,34 @@ export const ReplayTrainer = ({
   theme = 'dark',
   boardWidth = DEFAULT_BOARD_WIDTH,
   orientation = 'white',
+  engine,
 }: ReplayTrainerProps) => {
   const state = useReplayTrainer({ gameId, startFen, fetchGame, onMiss, onComplete });
   const colors = palette(theme);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [analysisSnapshot, setAnalysisSnapshot] =
+    useState<AnalysisContext | null>(null);
+
+  const boardOrientation =
+    state.trainColor === 'white'
+      ? 'white'
+      : state.trainColor === 'black'
+        ? 'black'
+        : orientation;
+
+  const openAnalysis = useCallback(() => {
+    if (!state.game) {
+      return;
+    }
+    setAnalysisSnapshot(
+      buildReplayAnalysisContext(state.game, state.plyIndex, boardOrientation),
+    );
+    setAnalysisOpen(true);
+  }, [state.game, state.plyIndex, boardOrientation]);
+
+  const closeAnalysis = useCallback(() => {
+    setAnalysisOpen(false);
+  }, []);
 
   if (state.loading) {
     return (
@@ -97,15 +132,6 @@ export const ReplayTrainer = ({
       : [];
 
   const draggable = training && !state.complete;
-
-  // When drilling a single color, orient the board so that side is on the
-  // bottom; otherwise fall back to the caller-provided orientation.
-  const boardOrientation =
-    state.trainColor === 'white'
-      ? 'white'
-      : state.trainColor === 'black'
-        ? 'black'
-        : orientation;
 
   return (
     <ThemeProvider theme={theme}>
@@ -205,6 +231,14 @@ export const ReplayTrainer = ({
         </div>
 
         <div style={controlsRowStyle}>
+          <button
+            type="button"
+            onClick={openAnalysis}
+            style={buttonStyle(colors, 'primary')}
+          >
+            Analyze
+          </button>
+
           {!training && (
             <>
               <button
@@ -277,6 +311,17 @@ export const ReplayTrainer = ({
           )}
         </div>
       </div>
+
+      {analysisOpen && analysisSnapshot && (
+        <AnalysisErrorBoundary onClose={closeAnalysis}>
+          <AnalysisBoard
+            analysisContext={analysisSnapshot}
+            onClose={closeAnalysis}
+            theme={theme}
+            engine={engine}
+          />
+        </AnalysisErrorBoundary>
+      )}
     </ThemeProvider>
   );
 };

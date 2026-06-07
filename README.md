@@ -11,8 +11,10 @@ A React component for replaying a chess game move-by-move and drilling it.
     opponent's reply is played automatically after each correct guess, and the
     board is rotated so the trained side is on the bottom.
   - With **Train Both** you drill every ply for both colors.
+- **Analyze** opens the built-in analysis board (`AnalysisBoard` from
+  `react-chess-core`) at the current position.
 
-Depends only on `react-chess-core` (board theme + highlights), `react-chessboard`,
+Depends on `react-chess-core` (board, engine, analysis board), `react-chessboard`,
 and `chess.js`.
 
 ## Usage
@@ -27,5 +29,16 @@ import { ReplayTrainer } from 'react-chess-replay-trainer';
   onMiss={(miss) => enrollMissedPosition(miss)}
   onExit={() => setTraining(null)}
   theme="dark"
+  engine={{ depth: 18, multiPv: 3 }}
 />;
+```
+
+For a custom shell, use `useReplayTrainer` with `AnalysisBoard` from the same package:
+
+```tsx
+import {
+  useReplayTrainer,
+  buildReplayAnalysisContext,
+  AnalysisBoard,
+} from 'react-chess-replay-trainer';
 ```
