@@ -280,7 +280,7 @@ export const ReplayTrainer = ({
           )}
           {!state.complete && state.feedback === 'incorrect' && (
             <span style={feedbackMessageStyle(colors, 'error')}>
-              Best was {state.expectedSan}
+              Game move was {state.expectedSan}
             </span>
           )}
         </div>
