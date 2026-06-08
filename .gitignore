@@ -1,5 +1,7 @@
 node_modules/
 dist/
+.npmrc
+storybook-static/
 .env
 .env.local
 *.log

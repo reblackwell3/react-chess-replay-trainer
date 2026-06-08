@@ -1,12 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { ChessboardDnDProvider } from 'react-chessboard';
 import {
   AnalysisBoard,
   AnalysisErrorBoundary,
   HighlightChessboard,
+  PlyNavigation,
   ThemeProvider,
   type AnalysisContext,
   type AnalysisEngineOptions,
+  type PlyNavigationRenderProps,
 } from 'react-chess-core';
 import { buildReplayAnalysisContext } from './buildReplayAnalysisContext';
 import { DEFAULT_BOARD_WIDTH } from './constants';
@@ -21,10 +23,8 @@ import {
   feedbackMessageStyle,
   headerStyle,
   mainContainerStyle,
-  navRowStyle,
   palette,
   playerNameStyle,
-  scrubberInputStyle,
   statusLineStyle,
   subtleTextStyle,
 } from './replayTrainerStyles';
@@ -47,6 +47,10 @@ export interface ReplayTrainerProps {
   orientation?: 'white' | 'black';
   /** Stockfish options for the built-in analysis board. Set `enabled: false` to hide engine lines. */
   engine?: AnalysisEngineOptions;
+  /** Custom ply navigation UI (e.g. MUI). Omit for the core default with scrubber. */
+  renderPlyNavigation?: (props: PlyNavigationRenderProps) => ReactNode;
+  /** Range scrubber on ply navigation. Default true. */
+  showPlyScrubber?: boolean;
 }
 
 /**
@@ -65,6 +69,8 @@ export const ReplayTrainer = ({
   boardWidth = DEFAULT_BOARD_WIDTH,
   orientation = 'white',
   engine,
+  renderPlyNavigation,
+  showPlyScrubber = true,
 }: ReplayTrainerProps) => {
   const state = useReplayTrainer({ gameId, startFen, fetchGame, onMiss, onComplete });
   const colors = palette(theme);
@@ -168,53 +174,20 @@ export const ReplayTrainer = ({
           />
         </ChessboardDnDProvider>
 
-        <div style={navRowStyle}>
-          <button
-            type="button"
-            onClick={state.goFirst}
-            disabled={!state.canPrev}
-            style={buttonStyle(colors, 'nav')}
-            aria-label="First move"
-          >
-            ⏮
-          </button>
-          <button
-            type="button"
-            onClick={state.goPrev}
-            disabled={!state.canPrev}
-            style={buttonStyle(colors, 'nav')}
-            aria-label="Previous move"
-          >
-            ◀
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={state.totalPly}
-            value={state.plyIndex}
-            onChange={(e) => state.goTo(Number(e.target.value))}
-            style={scrubberInputStyle}
-            aria-label="Scrub through game"
-          />
-          <button
-            type="button"
-            onClick={state.goNext}
-            disabled={!state.canNext}
-            style={buttonStyle(colors, 'nav')}
-            aria-label="Next move"
-          >
-            ▶
-          </button>
-          <button
-            type="button"
-            onClick={state.goLast}
-            disabled={!state.canNext}
-            style={buttonStyle(colors, 'nav')}
-            aria-label="Last move"
-          >
-            ⏭
-          </button>
-        </div>
+        <PlyNavigation
+          plyIndex={state.plyIndex}
+          totalPly={state.totalPly}
+          canPrev={state.canPrev}
+          canNext={state.canNext}
+          onGoFirst={state.goFirst}
+          onGoPrev={state.goPrev}
+          onGoNext={state.goNext}
+          onGoLast={state.goLast}
+          onGoTo={state.goTo}
+          theme={theme}
+          showScrubber={showPlyScrubber}
+          renderPlyNavigation={renderPlyNavigation}
+        />
 
         <div style={statusLineStyle(colors)}>
           Half move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.totalPly)} of{' '}

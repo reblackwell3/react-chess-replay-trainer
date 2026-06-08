@@ -43,12 +43,6 @@ export const headerStyle: CSSProperties = {
   fontSize: 14,
 };
 
-export const navRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-};
-
 export const controlsRowStyle: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
@@ -58,10 +52,6 @@ export const controlsRowStyle: CSSProperties = {
 
 export const playerNameStyle: CSSProperties = {
   fontWeight: 600,
-};
-
-export const scrubberInputStyle: CSSProperties = {
-  flex: 1,
 };
 
 export const feedbackContainerStyle: CSSProperties = {

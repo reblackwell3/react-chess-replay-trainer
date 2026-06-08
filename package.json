@@ -12,7 +12,9 @@
   ],
   "scripts": {
     "build": "rollup -c",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "storybook": "storybook dev -p 6008",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "rollup": "^4.22.2",
@@ -26,16 +28,29 @@
     "react-chessboard": "^4.7.1"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^1.9.0",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^12.3.0",
+    "@storybook/addon-essentials": "^8.2.9",
+    "@storybook/addon-interactions": "^8.2.9",
+    "@storybook/addon-links": "^8.2.9",
+    "@storybook/addon-onboarding": "^8.2.9",
+    "@storybook/blocks": "^8.2.9",
+    "@storybook/preset-typescript": "^3.0.0",
+    "@storybook/react": "^8.2.9",
+    "@storybook/react-vite": "^8.2.9",
+    "@storybook/test": "^8.2.9",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.1",
     "chess.js": "^1.0.0-beta.8",
     "react": "^18.3.1",
-    "react-chess-core": "file:../react-chess-core",
+    "react-chess-core": "^0.1.0",
     "react-chessboard": "^4.7.1",
     "react-dom": "^18.3.1",
-    "tslib": "^2.8.1"
+    "storybook": "^8.2.9",
+    "tslib": "^2.8.1",
+    "vite-tsconfig-paths": "^5.0.1"
   }
 }

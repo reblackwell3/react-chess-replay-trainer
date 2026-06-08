@@ -28,7 +28,13 @@ export {
   AnalysisBoardCore,
   AnalysisErrorBoundary,
   DEFAULT_ANALYSIS_LAYOUT,
+  DefaultPlyNavigation,
+  PlyNavigation,
+  defaultRenderPlyNavigation,
   type AnalysisContext,
   type AnalysisBoardProps,
   type AnalysisLayoutConfig,
+  type PlyNavigationModel,
+  type PlyNavigationProps,
+  type PlyNavigationRenderProps,
 } from 'react-chess-core';
