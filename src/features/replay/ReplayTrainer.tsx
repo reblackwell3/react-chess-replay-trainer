@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ChessboardDnDProvider } from 'react-chessboard';
 import {
   AnalysisBoard,
@@ -11,6 +11,23 @@ import {
 import { buildReplayAnalysisContext } from './buildReplayAnalysisContext';
 import { DEFAULT_BOARD_WIDTH } from './constants';
 import { useReplayTrainer } from './hooks/useReplayTrainer';
+import {
+  TRAIN_COLOR_LABEL,
+  buttonStyle,
+  centerContainerStyle,
+  controlsRowStyle,
+  customBoardStyle,
+  feedbackContainerStyle,
+  feedbackMessageStyle,
+  headerStyle,
+  mainContainerStyle,
+  navRowStyle,
+  palette,
+  playerNameStyle,
+  scrubberInputStyle,
+  statusLineStyle,
+  subtleTextStyle,
+} from './replayTrainerStyles';
 import type { ReplayGame, ReplayMiss } from './types';
 
 export interface ReplayTrainerProps {
@@ -31,22 +48,6 @@ export interface ReplayTrainerProps {
   /** Stockfish options for the built-in analysis board. Set `enabled: false` to hide engine lines. */
   engine?: AnalysisEngineOptions;
 }
-
-const TRAIN_COLOR_LABEL: Record<'white' | 'black' | 'both', string> = {
-  white: 'Training White',
-  black: 'Training Black',
-  both: 'Training Both',
-};
-
-const palette = (theme: 'light' | 'dark') => ({
-  text: theme === 'dark' ? '#e8e8e8' : '#1a1a1a',
-  subtle: theme === 'dark' ? '#9aa0a6' : '#5f6368',
-  border: theme === 'dark' ? '#3a3a3a' : '#d0d0d0',
-  surface: theme === 'dark' ? '#262626' : '#f5f5f5',
-  primary: '#3a7bd5',
-  success: '#2e7d32',
-  error: '#c62828',
-});
 
 /**
  * Browse a game freely, then drill it from any point. Browsing (first / prev /
@@ -94,7 +95,7 @@ export const ReplayTrainer = ({
 
   if (state.loading) {
     return (
-      <div style={{ ...centerStyle, width: boardWidth, color: colors.subtle }}>
+      <div style={centerContainerStyle(boardWidth, colors.subtle)}>
         Loading game…
       </div>
     );
@@ -102,7 +103,7 @@ export const ReplayTrainer = ({
 
   if (state.error || !state.game) {
     return (
-      <div style={{ ...centerStyle, width: boardWidth, color: colors.error }}>
+      <div style={centerContainerStyle(boardWidth, colors.error)}>
         {state.error ?? 'Game unavailable.'}
         {onExit && (
           <button
@@ -135,12 +136,12 @@ export const ReplayTrainer = ({
 
   return (
     <ThemeProvider theme={theme}>
-      <div style={{ ...columnStyle, width: boardWidth, color: colors.text }}>
+      <div style={mainContainerStyle(boardWidth, colors)}>
         <div style={headerStyle}>
-          <span style={{ fontWeight: 600 }}>
+          <span style={playerNameStyle}>
             {(game.white ?? 'White')} vs {(game.black ?? 'Black')}
           </span>
-          {game.result && <span style={{ color: colors.subtle }}>{game.result}</span>}
+          {game.result && <span style={subtleTextStyle(colors)}>{game.result}</span>}
         </div>
 
         <ChessboardDnDProvider>
@@ -163,11 +164,11 @@ export const ReplayTrainer = ({
             customArrows={customArrows}
             autoPromoteToQueen
             areArrowsAllowed={false}
-            customBoardStyle={{ borderRadius: 4 }}
+            customBoardStyle={customBoardStyle}
           />
         </ChessboardDnDProvider>
 
-        <div style={{ ...navRowStyle }}>
+        <div style={navRowStyle}>
           <button
             type="button"
             onClick={state.goFirst}
@@ -192,7 +193,7 @@ export const ReplayTrainer = ({
             max={state.totalPly}
             value={state.plyIndex}
             onChange={(e) => state.goTo(Number(e.target.value))}
-            style={{ flex: 1 }}
+            style={scrubberInputStyle}
             aria-label="Scrub through game"
           />
           <button
@@ -215,7 +216,7 @@ export const ReplayTrainer = ({
           </button>
         </div>
 
-        <div style={{ color: colors.subtle, fontSize: 13, textAlign: 'center' }}>
+        <div style={statusLineStyle(colors)}>
           Half move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.totalPly)} of{' '}
           {state.totalPly}
           {training && !state.complete && (
@@ -295,17 +296,17 @@ export const ReplayTrainer = ({
           )}
         </div>
 
-        <div style={{ minHeight: 24, textAlign: 'center' }}>
+        <div style={feedbackContainerStyle}>
           {state.complete && training && (
-            <span style={{ color: colors.success, fontWeight: 600 }}>
+            <span style={feedbackMessageStyle(colors, 'success')}>
               End of game — drill complete
             </span>
           )}
           {!state.complete && state.feedback === 'correct' && (
-            <span style={{ color: colors.success, fontWeight: 600 }}>Correct</span>
+            <span style={feedbackMessageStyle(colors, 'success')}>Correct</span>
           )}
           {!state.complete && state.feedback === 'incorrect' && (
-            <span style={{ color: colors.error, fontWeight: 600 }}>
+            <span style={feedbackMessageStyle(colors, 'error')}>
               Best was {state.expectedSan}
             </span>
           )}
@@ -324,61 +325,4 @@ export const ReplayTrainer = ({
       )}
     </ThemeProvider>
   );
-};
-
-const columnStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 8,
-};
-
-const centerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 12,
-  minHeight: 200,
-};
-
-const headerStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'baseline',
-  fontSize: 14,
-};
-
-const navRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-};
-
-const controlsRowStyle: React.CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 8,
-  justifyContent: 'center',
-};
-
-type ButtonVariant = 'primary' | 'ghost' | 'nav';
-
-const buttonStyle = (
-  colors: ReturnType<typeof palette>,
-  variant: ButtonVariant,
-): React.CSSProperties => {
-  const base: React.CSSProperties = {
-    padding: variant === 'nav' ? '4px 10px' : '8px 14px',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 14,
-    fontWeight: 600,
-    border: `1px solid ${colors.border}`,
-    background: colors.surface,
-    color: colors.text,
-  };
-  if (variant === 'primary') {
-    return { ...base, background: colors.primary, borderColor: colors.primary, color: '#fff' };
-  }
-  return base;
 };
