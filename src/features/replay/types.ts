@@ -24,7 +24,7 @@ export type ReplayMiss = {
   expectedUci: string;
   expectedSan: string;
   /** Side to move at {@link fen}. */
-  trainSide: ReplaySide;
+  sideToMove: ReplaySide;
   /** Opponent's prior ply that produced {@link fen}, when one exists. */
   setupFen?: string;
   setupUci?: string;

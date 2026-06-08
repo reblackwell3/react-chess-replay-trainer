@@ -155,7 +155,7 @@ export const ReplayTrainer = ({
             isDraggablePiece={({ piece }: { piece: string }) => {
               if (state.trainColor === 'white') return piece[0] === 'w';
               if (state.trainColor === 'black') return piece[0] === 'b';
-              return piece[0] === state.trainSide;
+              return piece[0] === state.sideToMove;
             }}
             onPieceDrop={(source: string, target: string, piece: string) =>
               state.handleDrop(source, target, piece)
@@ -189,7 +189,7 @@ export const ReplayTrainer = ({
           <input
             type="range"
             min={0}
-            max={state.total}
+            max={state.totalPly}
             value={state.plyIndex}
             onChange={(e) => state.goTo(Number(e.target.value))}
             style={{ flex: 1 }}
@@ -216,13 +216,13 @@ export const ReplayTrainer = ({
         </div>
 
         <div style={{ color: colors.subtle, fontSize: 13, textAlign: 'center' }}>
-          Half move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.total)} of{' '}
-          {state.total}
+          Half move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.totalPly)} of{' '}
+          {state.totalPly}
           {training && !state.complete && (
             <>
               {` · ${TRAIN_COLOR_LABEL[state.trainColor]}`}
               {state.trainColor === 'both'
-                ? ` · ${state.trainSide === 'b' ? 'Black' : 'White'} to move`
+                ? ` · ${state.sideToMove === 'b' ? 'Black' : 'White'} to move`
                 : state.isUserTurn
                   ? ' · Your move'
                   : ' · Opponent replying…'}

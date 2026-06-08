@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fenAtPly,
   findPlyIndexForFen,
-  sideToMove,
+  sideToMove as getSideToMove,
   uciFromDrop,
 } from '../replayUtils';
 import type {
@@ -35,9 +35,10 @@ export interface ReplayTrainerState {
   fen: string;
   /** 0-based ply index = number of moves played from the start. */
   plyIndex: number;
-  total: number;
+  /** Total half-moves (plies) in the loaded game. */
+  totalPly: number;
   complete: boolean;
-  trainSide: ReplaySide;
+  sideToMove: ReplaySide;
   /** Which side(s) the user is drilling. */
   trainColor: TrainColor;
   /** True when the side to move is the user's (i.e. they should guess now). */
@@ -126,14 +127,14 @@ export function useReplayTrainer({
   }, [gameId, startFen]);
 
   const movesUci = useMemo(() => game?.movesUci ?? [], [game]);
-  const total = movesUci.length;
+  const totalPly = movesUci.length;
   const fen = useMemo(() => fenAtPly(movesUci, plyIndex), [movesUci, plyIndex]);
-  const complete = plyIndex >= total && total > 0;
-  const trainSide = sideToMove(fen);
+  const complete = plyIndex >= totalPly && totalPly > 0;
+  const sideToMove = getSideToMove(fen);
   const isUserTurn =
     trainColor === 'both' ||
-    (trainColor === 'white' && trainSide === 'w') ||
-    (trainColor === 'black' && trainSide === 'b');
+    (trainColor === 'white' && sideToMove === 'w') ||
+    (trainColor === 'black' && sideToMove === 'b');
 
   const clearTransient = useCallback(() => {
     setFeedback(null);
@@ -143,18 +144,18 @@ export function useReplayTrainer({
 
   const goTo = useCallback(
     (ply: number) => {
-      const clamped = Math.max(0, Math.min(ply, total));
-      completedFiredRef.current = clamped >= total ? completedFiredRef.current : false;
+      const clamped = Math.max(0, Math.min(ply, totalPly));
+      completedFiredRef.current = clamped >= totalPly ? completedFiredRef.current : false;
       setPlyIndex(clamped);
       clearTransient();
     },
-    [total, clearTransient],
+    [totalPly, clearTransient],
   );
 
   const goFirst = useCallback(() => goTo(0), [goTo]);
   const goPrev = useCallback(() => goTo(plyIndex - 1), [goTo, plyIndex]);
   const goNext = useCallback(() => goTo(plyIndex + 1), [goTo, plyIndex]);
-  const goLast = useCallback(() => goTo(total), [goTo, total]);
+  const goLast = useCallback(() => goTo(totalPly), [goTo, totalPly]);
 
   const startTraining = useCallback(
     (color: TrainColor = 'both') => {
@@ -182,7 +183,7 @@ export function useReplayTrainer({
         fen: positionFen,
         expectedUci,
         expectedSan: game?.movesSan?.[index] ?? expectedUci,
-        trainSide: sideToMove(positionFen),
+        sideToMove: getSideToMove(positionFen),
         setupUci: index > 0 ? movesUci[index - 1] : undefined,
         setupFen: index > 0 ? fenAtPly(movesUci, index - 1) : undefined,
       };
@@ -240,11 +241,11 @@ export function useReplayTrainer({
       return;
     }
     const id = setTimeout(() => {
-      setPlyIndex((p) => (p < total ? p + 1 : p));
+      setPlyIndex((p) => (p < totalPly ? p + 1 : p));
       clearTransient();
     }, OPPONENT_MOVE_DELAY_MS);
     return () => clearTimeout(id);
-  }, [mode, complete, trainColor, isUserTurn, plyIndex, total, clearTransient]);
+  }, [mode, complete, trainColor, isUserTurn, plyIndex, totalPly, clearTransient]);
 
   return {
     game,
@@ -253,16 +254,16 @@ export function useReplayTrainer({
     mode,
     fen,
     plyIndex,
-    total,
+    totalPly,
     complete,
-    trainSide,
+    sideToMove,
     trainColor,
     isUserTurn,
     feedback,
     expectedSan,
     expectedUci,
     canPrev: plyIndex > 0,
-    canNext: plyIndex < total,
+    canNext: plyIndex < totalPly,
     goFirst,
     goPrev,
     goNext,
