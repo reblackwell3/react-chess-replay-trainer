@@ -12,7 +12,11 @@ export type {
   ReplaySide,
   TrainColor,
 } from './types';
-export { REPLAY_START_FEN, DEFAULT_BOARD_WIDTH } from './constants';
+export {
+  REPLAY_START_FEN,
+  DEFAULT_BOARD_WIDTH,
+  REPLAY_AUTOPLAY_STEP_MS,
+} from './constants';
 export {
   fenAtPly,
   findPlyIndexForFen,

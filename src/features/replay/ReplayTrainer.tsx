@@ -89,11 +89,12 @@ export const ReplayTrainer = ({
     if (!state.game) {
       return;
     }
+    state.stopAutoplay();
     setAnalysisSnapshot(
       buildReplayAnalysisContext(state.game, state.plyIndex, boardOrientation),
     );
     setAnalysisOpen(true);
-  }, [state.game, state.plyIndex, boardOrientation]);
+  }, [state.game, state.plyIndex, boardOrientation, state.stopAutoplay]);
 
   const closeAnalysis = useCallback(() => {
     setAnalysisOpen(false);
@@ -174,20 +175,31 @@ export const ReplayTrainer = ({
           />
         </ChessboardDnDProvider>
 
-        <PlyNavigation
-          plyIndex={state.plyIndex}
-          totalPly={state.totalPly}
-          canPrev={state.canPrev}
-          canNext={state.canNext}
-          onGoFirst={state.goFirst}
-          onGoPrev={state.goPrev}
-          onGoNext={state.goNext}
-          onGoLast={state.goLast}
-          onGoTo={state.goTo}
-          theme={theme}
-          showScrubber={showPlyScrubber}
-          renderPlyNavigation={renderPlyNavigation}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+          <PlyNavigation
+            plyIndex={state.plyIndex}
+            totalPly={state.totalPly}
+            canPrev={state.canPrev}
+            canNext={state.canNext}
+            onGoFirst={state.goFirst}
+            onGoPrev={state.goPrev}
+            onGoNext={state.goNext}
+            onGoLast={state.goLast}
+            onGoTo={state.goTo}
+            theme={theme}
+            showScrubber={showPlyScrubber}
+            renderPlyNavigation={renderPlyNavigation}
+          />
+          <button
+            type="button"
+            onClick={state.toggleAutoplay}
+            disabled={!state.autoplayActive && !state.canNext}
+            style={buttonStyle(colors, state.autoplayActive ? 'ghost' : 'primary')}
+            aria-label={state.autoplayActive ? 'Stop autoplay' : 'Autoplay game'}
+          >
+            {state.autoplayActive ? 'Stop' : 'Play'}
+          </button>
+        </div>
 
         <div style={statusLineStyle(colors)}>
           Half move {Math.min(state.plyIndex + (state.complete ? 0 : 1), state.totalPly)} of{' '}

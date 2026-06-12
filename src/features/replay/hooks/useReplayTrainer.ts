@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
 import {
   fenAtPly,
   findPlyIndexForFen,
@@ -58,6 +59,13 @@ export interface ReplayTrainerState {
   stopTraining: () => void;
   revealMove: () => void;
   handleDrop: (source: string, target: string, piece: string) => boolean;
+  /** True while browse mode is auto-advancing through the game. */
+  autoplayActive: boolean;
+  /** Start autoplay from the current ply (exits train mode). No-op at game end. */
+  startAutoplay: () => void;
+  stopAutoplay: () => void;
+  /** Toggle browse autoplay; exits train mode when starting. */
+  toggleAutoplay: () => void;
 }
 
 export function useReplayTrainer({
@@ -75,6 +83,7 @@ export function useReplayTrainer({
   const [plyIndex, setPlyIndex] = useState(0);
   const [feedback, setFeedback] = useState<ReplayFeedback>(null);
   const [expectedSan, setExpectedSan] = useState<string | null>(null);
+  const [autoplayActive, setAutoplayActive] = useState(false);
   const [expectedUci, setExpectedUci] = useState<string | null>(null);
 
   const fetchGameRef = useRef(fetchGame);
@@ -99,6 +108,7 @@ export function useReplayTrainer({
     setFeedback(null);
     setExpectedSan(null);
     setExpectedUci(null);
+    setAutoplayActive(false);
 
     fetchGameRef
       .current(gameId)
@@ -142,8 +152,13 @@ export function useReplayTrainer({
     setExpectedUci(null);
   }, []);
 
+  const stopAutoplay = useCallback(() => {
+    setAutoplayActive(false);
+  }, []);
+
   const goTo = useCallback(
     (ply: number) => {
+      setAutoplayActive(false);
       const clamped = Math.max(0, Math.min(ply, totalPly));
       completedFiredRef.current = clamped >= totalPly ? completedFiredRef.current : false;
       setPlyIndex(clamped);
@@ -157,8 +172,26 @@ export function useReplayTrainer({
   const goNext = useCallback(() => goTo(plyIndex + 1), [goTo, plyIndex]);
   const goLast = useCallback(() => goTo(totalPly), [goTo, totalPly]);
 
+  const startAutoplay = useCallback(() => {
+    if (plyIndex >= totalPly) {
+      return;
+    }
+    setMode('browse');
+    clearTransient();
+    setAutoplayActive(true);
+  }, [plyIndex, totalPly, clearTransient]);
+
+  const toggleAutoplay = useCallback(() => {
+    if (autoplayActive) {
+      stopAutoplay();
+      return;
+    }
+    startAutoplay();
+  }, [autoplayActive, startAutoplay, stopAutoplay]);
+
   const startTraining = useCallback(
     (color: TrainColor = 'both') => {
+      setAutoplayActive(false);
       setTrainColor(color);
       setMode('train');
       clearTransient();
@@ -234,6 +267,22 @@ export function useReplayTrainer({
     }
   }, [mode, complete]);
 
+  // Browse autoplay: advance one ply at a fixed interval until the game ends.
+  useEffect(() => {
+    if (!autoplayActive || mode === 'train') {
+      return;
+    }
+    if (plyIndex >= totalPly) {
+      setAutoplayActive(false);
+      return;
+    }
+    const id = setTimeout(() => {
+      setPlyIndex((p) => (p < totalPly ? p + 1 : p));
+      clearTransient();
+    }, REPLAY_AUTOPLAY_STEP_MS);
+    return () => clearTimeout(id);
+  }, [autoplayActive, mode, plyIndex, totalPly, clearTransient]);
+
   // In single-color drills, auto-play the opponent's reply once it's their turn
   // (e.g. after the user guesses correctly, or when training starts mid-game).
   useEffect(() => {
@@ -273,5 +322,9 @@ export function useReplayTrainer({
     stopTraining,
     revealMove,
     handleDrop,
+    autoplayActive,
+    startAutoplay,
+    stopAutoplay,
+    toggleAutoplay,
   };
 }
