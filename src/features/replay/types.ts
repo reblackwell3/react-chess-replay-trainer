@@ -10,6 +10,7 @@ export type ReplayGame = {
   result?: string;
   timeControl?: string;
   timeClass?: string;
+  date?: string;
   movesUci: string[];
   movesSan?: string[];
 };
