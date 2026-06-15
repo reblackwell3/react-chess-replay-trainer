@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createExpectedMoveDropHandler } from 'react-chess-core';
 import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
 import {
   fenAtPly,
   findPlyIndexForFen,
   sideToMove as getSideToMove,
-  uciFromDrop,
 } from '../replayUtils';
 import type {
   ReplayFeedback,
@@ -236,27 +236,28 @@ export function useReplayTrainer({
   }, [complete, game, movesUci, plyIndex, recordMiss, isUserTurn]);
 
   const handleDrop = useCallback(
-    (source: string, target: string, piece: string): boolean => {
-      if (mode !== 'train' || complete || !isUserTurn) return false;
-      const expectedUci = movesUci[plyIndex];
-      if (!expectedUci) return false;
-      const uci = uciFromDrop(fen, source, target, piece);
-      if (!uci) return false;
-
-      if (uci.toLowerCase() === expectedUci.toLowerCase()) {
-        setFeedback('correct');
-        setExpectedSan(null);
-        setExpectedUci(null);
-        setPlyIndex((p) => p + 1);
-        return true;
-      }
-
-      setFeedback('incorrect');
-      setExpectedSan(game?.movesSan?.[plyIndex] ?? expectedUci);
-      setExpectedUci(expectedUci);
-      recordMiss(plyIndex);
-      return false;
-    },
+    (source: string, target: string, piece: string): boolean =>
+      createExpectedMoveDropHandler({
+        fen,
+        expectedUci: movesUci[plyIndex],
+        enabled: mode === 'train' && !complete && isUserTurn,
+        onCorrect: () => {
+          setFeedback('correct');
+          setExpectedSan(null);
+          setExpectedUci(null);
+          setPlyIndex((p) => p + 1);
+        },
+        onIncorrect: () => {
+          const expectedUci = movesUci[plyIndex];
+          if (!expectedUci) {
+            return;
+          }
+          setFeedback('incorrect');
+          setExpectedSan(game?.movesSan?.[plyIndex] ?? expectedUci);
+          setExpectedUci(expectedUci);
+          recordMiss(plyIndex);
+        },
+      })(source, target, piece),
     [mode, complete, isUserTurn, movesUci, plyIndex, fen, game, recordMiss],
   );
 

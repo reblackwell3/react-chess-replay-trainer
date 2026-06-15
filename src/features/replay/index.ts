@@ -21,9 +21,9 @@ export {
   fenAtPly,
   findPlyIndexForFen,
   sideToMove,
-  uciFromDrop,
   normalizeFen,
 } from './replayUtils';
+export { uciFromDrop } from 'react-chess-core';
 export { buildReplayAnalysisContext } from './buildReplayAnalysisContext';
 
 // Re-export analysis board from react-chess-core for host apps.

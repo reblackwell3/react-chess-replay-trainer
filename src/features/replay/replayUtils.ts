@@ -1,4 +1,4 @@
-import { Chess, type Square } from 'chess.js';
+import { Chess } from 'chess.js';
 import { REPLAY_START_FEN } from './constants';
 import type { ReplaySide } from './types';
 
@@ -47,24 +47,4 @@ export function findPlyIndexForFen(
 
 export function sideToMove(fen: string): ReplaySide {
   return fen.trim().split(/\s+/)[1] === 'b' ? 'b' : 'w';
-}
-
-/** Resolve a board drag into a legal UCI string, or null when illegal. */
-export function uciFromDrop(
-  fen: string,
-  sourceSquare: string,
-  targetSquare: string,
-  piece: string,
-): string | null {
-  const chess = new Chess(fen);
-  const pieceType = piece[1]?.toLowerCase();
-  const legal = chess
-    .moves({ square: sourceSquare as Square, verbose: true })
-    .find(
-      (move) =>
-        move.to === targetSquare &&
-        (!move.promotion || move.promotion === pieceType),
-    );
-  if (!legal) return null;
-  return `${legal.from}${legal.to}${legal.promotion ?? ''}`;
 }
