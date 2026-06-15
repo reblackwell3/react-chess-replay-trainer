@@ -1,6 +1,6 @@
 import { Chess } from 'chess.js';
 import { REPLAY_START_FEN } from './constants';
-import type { ReplaySide } from './types';
+import type { ReplaySide, TrainColor } from './types';
 
 /** Compare positions ignoring move clocks (first four FEN fields). */
 export function normalizeFen(fen: string): string {
@@ -47,4 +47,15 @@ export function findPlyIndexForFen(
 
 export function sideToMove(fen: string): ReplaySide {
   return fen.trim().split(/\s+/)[1] === 'b' ? 'b' : 'w';
+}
+
+export function isTrainSideToMove(
+  trainColor: TrainColor,
+  side: ReplaySide,
+): boolean {
+  return (
+    trainColor === 'both' ||
+    (trainColor === 'white' && side === 'w') ||
+    (trainColor === 'black' && side === 'b')
+  );
 }

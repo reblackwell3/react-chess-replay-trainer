@@ -4,6 +4,7 @@ import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
 import {
   fenAtPly,
   findPlyIndexForFen,
+  isTrainSideToMove,
   sideToMove as getSideToMove,
 } from '../replayUtils';
 import type {
@@ -95,6 +96,8 @@ export function useReplayTrainer({
 
   const recordedRef = useRef<Set<number>>(new Set());
   const completedFiredRef = useRef(false);
+  const modeRef = useRef<ReplayMode>('browse');
+  const trainColorRef = useRef<TrainColor>('both');
 
   useEffect(() => {
     let cancelled = false;
@@ -104,7 +107,9 @@ export function useReplayTrainer({
     recordedRef.current = new Set();
     completedFiredRef.current = false;
     setMode('browse');
+    modeRef.current = 'browse';
     setTrainColor('both');
+    trainColorRef.current = 'both';
     setFeedback(null);
     setExpectedSan(null);
     setExpectedUci(null);
@@ -141,10 +146,10 @@ export function useReplayTrainer({
   const fen = useMemo(() => fenAtPly(movesUci, plyIndex), [movesUci, plyIndex]);
   const complete = plyIndex >= totalPly && totalPly > 0;
   const sideToMove = getSideToMove(fen);
-  const isUserTurn =
-    trainColor === 'both' ||
-    (trainColor === 'white' && sideToMove === 'w') ||
-    (trainColor === 'black' && sideToMove === 'b');
+  const isUserTurn = isTrainSideToMove(trainColor, sideToMove);
+
+  modeRef.current = mode;
+  trainColorRef.current = trainColor;
 
   const clearTransient = useCallback(() => {
     setFeedback(null);
@@ -193,6 +198,8 @@ export function useReplayTrainer({
     (color: TrainColor = 'both') => {
       setAutoplayActive(false);
       setTrainColor(color);
+      trainColorRef.current = color;
+      modeRef.current = 'train';
       setMode('train');
       clearTransient();
     },
@@ -200,6 +207,7 @@ export function useReplayTrainer({
   );
 
   const stopTraining = useCallback(() => {
+    modeRef.current = 'browse';
     setMode('browse');
     clearTransient();
   }, [clearTransient]);
@@ -240,7 +248,10 @@ export function useReplayTrainer({
       createExpectedMoveDropHandler({
         fen,
         expectedUci: movesUci[plyIndex],
-        enabled: mode === 'train' && !complete && isUserTurn,
+        enabled:
+          modeRef.current === 'train' &&
+          !complete &&
+          isTrainSideToMove(trainColorRef.current, sideToMove),
         onCorrect: () => {
           setFeedback('correct');
           setExpectedSan(null);
@@ -258,7 +269,7 @@ export function useReplayTrainer({
           recordMiss(plyIndex);
         },
       })(source, target, piece),
-    [mode, complete, isUserTurn, movesUci, plyIndex, fen, game, recordMiss],
+    [complete, movesUci, plyIndex, fen, game, recordMiss, sideToMove],
   );
 
   useEffect(() => {

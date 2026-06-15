@@ -1,11 +1,11 @@
 import { useCallback, useState, type ReactNode } from 'react';
-import { ChessboardDnDProvider } from 'react-chessboard';
 import {
   AnalysisBoard,
   AnalysisErrorBoundary,
   HighlightChessboard,
   PlyNavigation,
   ThemeProvider,
+  ChessboardDnDProvider,
   type AnalysisContext,
   type AnalysisEngineOptions,
   type BoardThemeId,
@@ -172,7 +172,7 @@ export const ReplayTrainer = ({
               state.handleDrop(source, target, piece)
             }
             customArrows={customArrows}
-            autoPromoteToQueen
+            promotionDialogVariant="modal"
             areArrowsAllowed={false}
             customBoardStyle={customBoardStyle}
           />
