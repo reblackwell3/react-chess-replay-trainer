@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalysisEngineOptions } from 'react-chess-core';
 import {
   getReplayMissDisplay,
@@ -47,8 +47,11 @@ export function useReplayMissSequence(
     setSequence(null);
   }, []);
 
+  const prevFeedbackRef = useRef(feedback);
   useEffect(() => {
-    if (feedback !== 'incorrect') {
+    const prevFeedback = prevFeedbackRef.current;
+    prevFeedbackRef.current = feedback;
+    if (prevFeedback === 'incorrect' && feedback !== 'incorrect') {
       setSequence(null);
     }
   }, [feedback]);
