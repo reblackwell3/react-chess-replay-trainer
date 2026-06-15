@@ -8,6 +8,7 @@ import {
   ThemeProvider,
   type AnalysisContext,
   type AnalysisEngineOptions,
+  type BoardThemeId,
   type PlyNavigationRenderProps,
 } from 'react-chess-core';
 import { buildReplayAnalysisContext } from './buildReplayAnalysisContext';
@@ -42,6 +43,7 @@ export interface ReplayTrainerProps {
   /** Called when the user leaves the trainer. */
   onExit?: () => void;
   theme?: 'light' | 'dark';
+  boardTheme?: BoardThemeId;
   boardWidth?: number;
   /** Side shown at the bottom of the board. Defaults to white. */
   orientation?: 'white' | 'black';
@@ -66,6 +68,7 @@ export const ReplayTrainer = ({
   onComplete,
   onExit,
   theme = 'dark',
+  boardTheme,
   boardWidth = DEFAULT_BOARD_WIDTH,
   orientation = 'white',
   engine,
@@ -142,7 +145,7 @@ export const ReplayTrainer = ({
   const draggable = training && !state.complete;
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} boardTheme={boardTheme}>
       <div style={mainContainerStyle(boardWidth, colors)}>
         <div style={headerStyle}>
           <span style={playerNameStyle}>
