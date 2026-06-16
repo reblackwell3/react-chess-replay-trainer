@@ -25,28 +25,33 @@ export {
 } from './replayUtils';
 export { uciFromDrop } from 'react-chess-core';
 export { buildReplayAnalysisContext } from './buildReplayAnalysisContext';
+
 export {
   fenAfterUci,
   refutationEvalGapCp,
   refutationFromEvaluation,
-  replayRefutationEngineOptions,
-  REPLAY_REFUTATION_EVAL_GAP_CP,
-  REPLAY_REFUTATION_EVAL_GAP_PAWNS,
-  type ReplayRefutationResult,
-} from './refutation/replayRefutation';
+  type RefutationResult as ReplayRefutationResult,
+} from 'react-chess-core';
 export {
-  getReplayMissDisplay,
-  REPLAY_MISS_MOVE_ANIMATION_MS,
-  REPLAY_MISS_REFUTATION_MAX_WAIT_MS,
-  REPLAY_MISS_REFUTATION_PAUSE_MS,
-  REPLAY_MISS_WRONG_PAUSE_MS,
+  refutationEngineOptions as replayRefutationEngineOptions,
+  REFUTATION_EVAL_GAP_CP as REPLAY_REFUTATION_EVAL_GAP_CP,
+  REFUTATION_EVAL_GAP_PAWNS as REPLAY_REFUTATION_EVAL_GAP_PAWNS,
+} from 'react-chess-core';
+export {
+  getMissDisplay as getReplayMissDisplay,
+  MISS_MOVE_ANIMATION_MS as REPLAY_MISS_MOVE_ANIMATION_MS,
+  MISS_REFUTATION_MAX_WAIT_MS as REPLAY_MISS_REFUTATION_MAX_WAIT_MS,
+  MISS_REFUTATION_PAUSE_MS as REPLAY_MISS_REFUTATION_PAUSE_MS,
+  MISS_WRONG_PAUSE_MS as REPLAY_MISS_WRONG_PAUSE_MS,
+  type MissDisplay as ReplayMissDisplay,
   type MissSequencePhase,
   type MissSequenceState,
-  type ReplayMissDisplay,
-} from './miss/replayMissDisplay';
-export { useReplayRefutation } from './miss/useReplayRefutation';
-export { useReplayMissSequence } from './miss/useReplayMissSequence';
-export { useReplayMissBoard } from './miss/useReplayMissBoard';
+} from 'react-chess-core';
+export {
+  useMissRefutation as useReplayRefutation,
+  useMissSequence as useReplayMissSequence,
+  useMissBoard as useReplayMissBoard,
+} from 'react-chess-core';
 
 // Re-export analysis board from react-chess-core for host apps.
 export {
