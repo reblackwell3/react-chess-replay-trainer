@@ -17,6 +17,8 @@ A React component for replaying a chess game move-by-move and drilling it.
 Depends on `react-chess-core` (board, engine, analysis board), `react-chessboard`,
 and `chess.js`.
 
+Used in production at [endchess.com](https://endchess.com).
+
 ## Usage
 
 ```tsx
