@@ -102,11 +102,37 @@ function pushVersionCommit(name, version) {
 const pkg = readPackage();
 const lockPath = join(root, 'package-lock.json');
 
-if (fs.existsSync(lockPath)) {
-  run('npm ci --ignore-scripts');
-} else {
-  run('npm install --ignore-scripts');
+function lockHasLocalDeps(lockPath) {
+  if (!fs.existsSync(lockPath)) {
+    return false;
+  }
+  const lock = fs.readFileSync(lockPath, 'utf8');
+  return (
+    lock.includes('file:../') ||
+    lock.includes('"resolved": "../') ||
+    /"\.\.\/[^"]+": \{/.test(lock)
+  );
 }
+
+function installDependencies() {
+  if (lockHasLocalDeps(lockPath)) {
+    console.log(
+      'publish-ci: package-lock.json links local sibling packages; reinstalling from npm',
+    );
+    fs.unlinkSync(lockPath);
+    run('npm install --ignore-scripts --no-audit --no-fund');
+    return;
+  }
+
+  if (fs.existsSync(lockPath)) {
+    run('npm ci --ignore-scripts');
+    return;
+  }
+
+  run('npm install --ignore-scripts --no-audit --no-fund');
+}
+
+installDependencies();
 
 if (pkg.scripts?.test) {
   run('npm test');
