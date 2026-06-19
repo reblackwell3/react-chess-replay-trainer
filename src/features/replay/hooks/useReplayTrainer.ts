@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createExpectedMoveDropHandler } from 'react-chess-core';
+import {
+  createExpectedMoveDropHandler,
+  fenAfterUci,
+  useCorrectMoveFeedback,
+} from 'react-chess-core';
 import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
 import {
   fenAtPly,
@@ -49,6 +53,10 @@ export interface ReplayTrainerState {
   /** Revealed/expected move at the current ply (set after a miss or reveal). */
   expectedSan: string | null;
   expectedUci: string | null;
+  /** Destination square of the last correct guess (green check overlay). */
+  correctMoveSquare: string | null;
+  /** FEN shown on the board (includes a pending correct-move ply). */
+  displayFen: string;
   canPrev: boolean;
   canNext: boolean;
   goFirst: () => void;
@@ -86,6 +94,13 @@ export function useReplayTrainer({
   const [expectedSan, setExpectedSan] = useState<string | null>(null);
   const [autoplayActive, setAutoplayActive] = useState(false);
   const [expectedUci, setExpectedUci] = useState<string | null>(null);
+  const [feedbackFen, setFeedbackFen] = useState<string | null>(null);
+  const {
+    correctMoveSquare,
+    showCorrectMove,
+    clearCorrectMoveFeedback,
+    isShowingCorrectMove,
+  } = useCorrectMoveFeedback();
 
   const fetchGameRef = useRef(fetchGame);
   fetchGameRef.current = fetchGame;
@@ -98,6 +113,8 @@ export function useReplayTrainer({
   const completedFiredRef = useRef(false);
   const modeRef = useRef<ReplayMode>('browse');
   const trainColorRef = useRef<TrainColor>('both');
+  const showingCorrectMoveRef = useRef(false);
+  showingCorrectMoveRef.current = isShowingCorrectMove;
 
   useEffect(() => {
     let cancelled = false;
@@ -144,6 +161,7 @@ export function useReplayTrainer({
   const movesUci = useMemo(() => game?.movesUci ?? [], [game]);
   const totalPly = movesUci.length;
   const fen = useMemo(() => fenAtPly(movesUci, plyIndex), [movesUci, plyIndex]);
+  const displayFen = feedbackFen ?? fen;
   const complete = plyIndex >= totalPly && totalPly > 0;
   const sideToMove = getSideToMove(fen);
   const isUserTurn = isTrainSideToMove(trainColor, sideToMove);
@@ -155,7 +173,9 @@ export function useReplayTrainer({
     setFeedback(null);
     setExpectedSan(null);
     setExpectedUci(null);
-  }, []);
+    setFeedbackFen(null);
+    clearCorrectMoveFeedback();
+  }, [clearCorrectMoveFeedback]);
 
   const stopAutoplay = useCallback(() => {
     setAutoplayActive(false);
@@ -251,12 +271,21 @@ export function useReplayTrainer({
         enabled:
           modeRef.current === 'train' &&
           !complete &&
+          !showingCorrectMoveRef.current &&
           isTrainSideToMove(trainColorRef.current, sideToMove),
-        onCorrect: () => {
+        onCorrect: (uci) => {
           setFeedback('correct');
           setExpectedSan(null);
           setExpectedUci(null);
-          setPlyIndex((p) => p + 1);
+          const nextFen = fenAfterUci(fen, uci);
+          if (nextFen) {
+            setFeedbackFen(nextFen);
+          }
+          showCorrectMove(uci.slice(2, 4), () => {
+            setFeedbackFen(null);
+            setFeedback(null);
+            setPlyIndex((p) => p + 1);
+          });
         },
         onIncorrect: () => {
           const expectedUci = movesUci[plyIndex];
@@ -269,7 +298,7 @@ export function useReplayTrainer({
           recordMiss(plyIndex);
         },
       })(source, target, piece),
-    [complete, movesUci, plyIndex, fen, game, recordMiss, sideToMove],
+    [complete, fen, movesUci, plyIndex, game, recordMiss, sideToMove, showCorrectMove],
   );
 
   useEffect(() => {
@@ -301,12 +330,15 @@ export function useReplayTrainer({
     if (mode !== 'train' || complete || trainColor === 'both' || isUserTurn) {
       return;
     }
+    if (isShowingCorrectMove) {
+      return;
+    }
     const id = setTimeout(() => {
       setPlyIndex((p) => (p < totalPly ? p + 1 : p));
       clearTransient();
     }, OPPONENT_MOVE_DELAY_MS);
     return () => clearTimeout(id);
-  }, [mode, complete, trainColor, isUserTurn, plyIndex, totalPly, clearTransient]);
+  }, [mode, complete, trainColor, isUserTurn, plyIndex, totalPly, clearTransient, isShowingCorrectMove]);
 
   return {
     game,
@@ -323,6 +355,8 @@ export function useReplayTrainer({
     feedback,
     expectedSan,
     expectedUci,
+    correctMoveSquare,
+    displayFen,
     canPrev: plyIndex > 0,
     canNext: plyIndex < totalPly,
     goFirst,

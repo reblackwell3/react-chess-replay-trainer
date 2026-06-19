@@ -160,9 +160,10 @@ export const ReplayTrainer = ({
             checkSquare=""
             hintSquare={null}
             incorrectMoveSquare={null}
-            position={state.fen}
+            correctMoveSquare={state.correctMoveSquare}
+            position={state.displayFen}
             boardOrientation={boardOrientation}
-            arePiecesDraggable={draggable}
+            arePiecesDraggable={draggable && !state.correctMoveSquare}
             isDraggablePiece={({ piece }: { piece: string }) => {
               if (state.trainColor === 'white') return piece[0] === 'w';
               if (state.trainColor === 'black') return piece[0] === 'b';
