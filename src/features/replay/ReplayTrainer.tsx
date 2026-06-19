@@ -173,6 +173,7 @@ export const ReplayTrainer = ({
               state.handleDrop(source, target, piece)
             }
             customArrows={customArrows}
+            lastMoveUci={state.lastMoveUci}
             promotionDialogVariant="modal"
             areArrowsAllowed={false}
             customBoardStyle={customBoardStyle}

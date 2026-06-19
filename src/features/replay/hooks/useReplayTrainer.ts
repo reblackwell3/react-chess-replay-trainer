@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createExpectedMoveDropHandler,
   fenAfterUci,
+  lastMoveUciAtPly,
   useCorrectMoveFeedback,
 } from 'react-chess-core';
 import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
@@ -57,6 +58,8 @@ export interface ReplayTrainerState {
   correctMoveSquare: string | null;
   /** FEN shown on the board (includes a pending correct-move ply). */
   displayFen: string;
+  /** UCI of the move that produced the current board position. */
+  lastMoveUci: string | null;
   canPrev: boolean;
   canNext: boolean;
   goFirst: () => void;
@@ -162,6 +165,12 @@ export function useReplayTrainer({
   const totalPly = movesUci.length;
   const fen = useMemo(() => fenAtPly(movesUci, plyIndex), [movesUci, plyIndex]);
   const displayFen = feedbackFen ?? fen;
+  const lastMoveUci = useMemo(() => {
+    if (feedbackFen) {
+      return movesUci[plyIndex] ?? null;
+    }
+    return lastMoveUciAtPly(movesUci, plyIndex);
+  }, [feedbackFen, movesUci, plyIndex]);
   const complete = plyIndex >= totalPly && totalPly > 0;
   const sideToMove = getSideToMove(fen);
   const isUserTurn = isTrainSideToMove(trainColor, sideToMove);
@@ -357,6 +366,7 @@ export function useReplayTrainer({
     expectedUci,
     correctMoveSquare,
     displayFen,
+    lastMoveUci,
     canPrev: plyIndex > 0,
     canNext: plyIndex < totalPly,
     goFirst,
