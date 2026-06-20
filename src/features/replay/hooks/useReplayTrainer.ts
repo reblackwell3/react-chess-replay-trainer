@@ -30,6 +30,8 @@ export interface UseReplayTrainerOptions {
   fetchGame: (gameId: string) => Promise<ReplayGame | null>;
   onMiss?: (miss: ReplayMiss) => void;
   onComplete?: () => void;
+  /** Keep wrong moves on the board for engine refutation feedback. */
+  refutationOnIncorrect?: boolean;
 }
 
 export interface ReplayTrainerState {
@@ -87,6 +89,7 @@ export function useReplayTrainer({
   fetchGame,
   onMiss,
   onComplete,
+  refutationOnIncorrect = false,
 }: UseReplayTrainerOptions): ReplayTrainerState {
   const [game, setGame] = useState<ReplayGame | null>(null);
   const [loading, setLoading] = useState(true);
@@ -289,6 +292,8 @@ export function useReplayTrainer({
           !showingCorrectMoveRef.current &&
           !showingIncorrectMoveRef.current &&
           isTrainSideToMove(trainColorRef.current, sideToMove),
+        acceptIncorrectDrop: refutationOnIncorrect,
+        skipIncorrectOverlay: refutationOnIncorrect,
         onCorrect: ({ uci, targetSquare }) => {
           setFeedback('correct');
           setExpectedSan(null);
@@ -314,7 +319,7 @@ export function useReplayTrainer({
           recordMiss(plyIndex);
         },
       })(source, target, piece),
-    [complete, createDropHandler, fen, movesUci, plyIndex, game, recordMiss, sideToMove, showCorrectMove],
+    [complete, createDropHandler, fen, movesUci, plyIndex, game, recordMiss, refutationOnIncorrect, sideToMove, showCorrectMove],
   );
 
   useEffect(() => {

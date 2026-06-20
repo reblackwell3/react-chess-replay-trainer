@@ -5,7 +5,6 @@ import {
   HighlightChessboard,
   PlyNavigation,
   ThemeProvider,
-  ChessboardDnDProvider,
   DEFAULT_ANSWER_ARROW_COLOR,
   type AnalysisContext,
   type AnalysisEngineOptions,
@@ -155,35 +154,33 @@ export const ReplayTrainer = ({
           {game.result && <span style={subtleTextStyle(colors)}>{game.result}</span>}
         </div>
 
-        <ChessboardDnDProvider>
-          <HighlightChessboard
-            boardWidth={boardWidth}
-            checkSquare=""
-            hintSquare={null}
-            incorrectMoveSquare={state.incorrectMoveSquare}
-            correctMoveSquare={state.correctMoveSquare}
-            position={state.displayFen}
-            boardOrientation={boardOrientation}
-            arePiecesDraggable={
-              draggable &&
-              !state.correctMoveSquare &&
-              !state.incorrectMoveSquare
-            }
-            isDraggablePiece={({ piece }: { piece: string }) => {
-              if (state.trainColor === 'white') return piece[0] === 'w';
-              if (state.trainColor === 'black') return piece[0] === 'b';
-              return piece[0] === state.sideToMove;
-            }}
-            onPieceDrop={(source: string, target: string, piece: string) =>
-              state.handleDrop(source, target, piece)
-            }
-            customArrows={customArrows}
-            lastMoveUci={state.lastMoveUci}
-            promotionDialogVariant="modal"
-            areArrowsAllowed={false}
-            customBoardStyle={customBoardStyle}
-          />
-        </ChessboardDnDProvider>
+        <HighlightChessboard
+          boardWidth={boardWidth}
+          checkSquare=""
+          hintSquare={null}
+          incorrectMoveSquare={state.incorrectMoveSquare}
+          correctMoveSquare={state.correctMoveSquare}
+          position={state.displayFen}
+          boardOrientation={boardOrientation}
+          arePiecesDraggable={
+            draggable &&
+            !state.correctMoveSquare &&
+            !state.incorrectMoveSquare
+          }
+          isDraggablePiece={({ piece }: { piece: string }) => {
+            if (state.trainColor === 'white') return piece[0] === 'w';
+            if (state.trainColor === 'black') return piece[0] === 'b';
+            return piece[0] === state.sideToMove;
+          }}
+          onPieceDrop={(source: string, target: string, piece: string) =>
+            state.handleDrop(source, target, piece)
+          }
+          customArrows={customArrows}
+          lastMoveUci={state.lastMoveUci}
+          promotionDialogVariant="modal"
+          areArrowsAllowed={false}
+          customBoardStyle={customBoardStyle}
+        />
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <PlyNavigation
