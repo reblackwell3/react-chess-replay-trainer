@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  createExpectedMoveDropHandler,
   fenAfterUci,
   lastMoveUciAtPly,
-  useCorrectMoveFeedback,
+  useTrainingMoveFeedback,
 } from 'react-chess-core';
 import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
 import {
@@ -56,6 +55,8 @@ export interface ReplayTrainerState {
   expectedUci: string | null;
   /** Destination square of the last correct guess (green check overlay). */
   correctMoveSquare: string | null;
+  /** Origin square of the last rejected guess (red X overlay). */
+  incorrectMoveSquare: string | null;
   /** FEN shown on the board (includes a pending correct-move ply). */
   displayFen: string;
   /** UCI of the move that produced the current board position. */
@@ -91,7 +92,7 @@ export function useReplayTrainer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<ReplayMode>('browse');
-  const [trainColor, setTrainColor] = useState<TrainColor>('both');
+  const [trainColor, setTrainColor] = useState<TrainColor>('white');
   const [plyIndex, setPlyIndex] = useState(0);
   const [feedback, setFeedback] = useState<ReplayFeedback>(null);
   const [expectedSan, setExpectedSan] = useState<string | null>(null);
@@ -100,10 +101,13 @@ export function useReplayTrainer({
   const [feedbackFen, setFeedbackFen] = useState<string | null>(null);
   const {
     correctMoveSquare,
+    incorrectMoveSquare,
     showCorrectMove,
-    clearCorrectMoveFeedback,
+    clearMoveFeedback,
     isShowingCorrectMove,
-  } = useCorrectMoveFeedback();
+    isShowingIncorrectMove,
+    createDropHandler,
+  } = useTrainingMoveFeedback();
 
   const fetchGameRef = useRef(fetchGame);
   fetchGameRef.current = fetchGame;
@@ -115,9 +119,11 @@ export function useReplayTrainer({
   const recordedRef = useRef<Set<number>>(new Set());
   const completedFiredRef = useRef(false);
   const modeRef = useRef<ReplayMode>('browse');
-  const trainColorRef = useRef<TrainColor>('both');
+  const trainColorRef = useRef<TrainColor>('white');
   const showingCorrectMoveRef = useRef(false);
   showingCorrectMoveRef.current = isShowingCorrectMove;
+  const showingIncorrectMoveRef = useRef(false);
+  showingIncorrectMoveRef.current = isShowingIncorrectMove;
 
   useEffect(() => {
     let cancelled = false;
@@ -128,8 +134,8 @@ export function useReplayTrainer({
     completedFiredRef.current = false;
     setMode('browse');
     modeRef.current = 'browse';
-    setTrainColor('both');
-    trainColorRef.current = 'both';
+    setTrainColor('white');
+    trainColorRef.current = 'white';
     setFeedback(null);
     setExpectedSan(null);
     setExpectedUci(null);
@@ -183,8 +189,8 @@ export function useReplayTrainer({
     setExpectedSan(null);
     setExpectedUci(null);
     setFeedbackFen(null);
-    clearCorrectMoveFeedback();
-  }, [clearCorrectMoveFeedback]);
+    clearMoveFeedback();
+  }, [clearMoveFeedback]);
 
   const stopAutoplay = useCallback(() => {
     setAutoplayActive(false);
@@ -224,7 +230,7 @@ export function useReplayTrainer({
   }, [autoplayActive, startAutoplay, stopAutoplay]);
 
   const startTraining = useCallback(
-    (color: TrainColor = 'both') => {
+    (color: TrainColor = 'white') => {
       setAutoplayActive(false);
       setTrainColor(color);
       trainColorRef.current = color;
@@ -274,15 +280,16 @@ export function useReplayTrainer({
 
   const handleDrop = useCallback(
     (source: string, target: string, piece: string): boolean =>
-      createExpectedMoveDropHandler({
+      createDropHandler({
         fen,
         expectedUci: movesUci[plyIndex],
         enabled:
           modeRef.current === 'train' &&
           !complete &&
           !showingCorrectMoveRef.current &&
+          !showingIncorrectMoveRef.current &&
           isTrainSideToMove(trainColorRef.current, sideToMove),
-        onCorrect: (uci) => {
+        onCorrect: ({ uci, targetSquare }) => {
           setFeedback('correct');
           setExpectedSan(null);
           setExpectedUci(null);
@@ -290,7 +297,7 @@ export function useReplayTrainer({
           if (nextFen) {
             setFeedbackFen(nextFen);
           }
-          showCorrectMove(uci.slice(2, 4), () => {
+          showCorrectMove(targetSquare, () => {
             setFeedbackFen(null);
             setFeedback(null);
             setPlyIndex((p) => p + 1);
@@ -307,7 +314,7 @@ export function useReplayTrainer({
           recordMiss(plyIndex);
         },
       })(source, target, piece),
-    [complete, fen, movesUci, plyIndex, game, recordMiss, sideToMove, showCorrectMove],
+    [complete, createDropHandler, fen, movesUci, plyIndex, game, recordMiss, sideToMove, showCorrectMove],
   );
 
   useEffect(() => {
@@ -339,7 +346,7 @@ export function useReplayTrainer({
     if (mode !== 'train' || complete || trainColor === 'both' || isUserTurn) {
       return;
     }
-    if (isShowingCorrectMove) {
+    if (isShowingCorrectMove || isShowingIncorrectMove) {
       return;
     }
     const id = setTimeout(() => {
@@ -347,7 +354,7 @@ export function useReplayTrainer({
       clearTransient();
     }, OPPONENT_MOVE_DELAY_MS);
     return () => clearTimeout(id);
-  }, [mode, complete, trainColor, isUserTurn, plyIndex, totalPly, clearTransient, isShowingCorrectMove]);
+  }, [mode, complete, trainColor, isUserTurn, plyIndex, totalPly, clearTransient, isShowingCorrectMove, isShowingIncorrectMove]);
 
   return {
     game,
@@ -365,6 +372,7 @@ export function useReplayTrainer({
     expectedSan,
     expectedUci,
     correctMoveSquare,
+    incorrectMoveSquare,
     displayFen,
     lastMoveUci,
     canPrev: plyIndex > 0,

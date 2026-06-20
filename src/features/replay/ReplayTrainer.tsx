@@ -6,6 +6,7 @@ import {
   PlyNavigation,
   ThemeProvider,
   ChessboardDnDProvider,
+  DEFAULT_ANSWER_ARROW_COLOR,
   type AnalysisContext,
   type AnalysisEngineOptions,
   type BoardThemeId,
@@ -137,7 +138,7 @@ export const ReplayTrainer = ({
           [
             state.expectedUci.slice(0, 2),
             state.expectedUci.slice(2, 4),
-            colors.primary,
+            DEFAULT_ANSWER_ARROW_COLOR,
           ],
         ]
       : [];
@@ -159,11 +160,15 @@ export const ReplayTrainer = ({
             boardWidth={boardWidth}
             checkSquare=""
             hintSquare={null}
-            incorrectMoveSquare={null}
+            incorrectMoveSquare={state.incorrectMoveSquare}
             correctMoveSquare={state.correctMoveSquare}
             position={state.displayFen}
             boardOrientation={boardOrientation}
-            arePiecesDraggable={draggable && !state.correctMoveSquare}
+            arePiecesDraggable={
+              draggable &&
+              !state.correctMoveSquare &&
+              !state.incorrectMoveSquare
+            }
             isDraggablePiece={({ piece }: { piece: string }) => {
               if (state.trainColor === 'white') return piece[0] === 'w';
               if (state.trainColor === 'black') return piece[0] === 'b';
