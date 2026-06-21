@@ -1,0 +1,55 @@
+#!/bin/sh
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || true)
+root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+repo=$(basename "$root")
+
+uses_staging_flow=0
+case "$repo" in
+  endchess-frontend|endchess-backend) uses_staging_flow=1 ;;
+esac
+
+protected=0
+protected_label=""
+
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+  protected=1
+  protected_label="$branch"
+elif [ "$uses_staging_flow" = "1" ] && [ "$branch" = "staging" ]; then
+  protected=1
+  protected_label="staging"
+fi
+
+if [ "$protected" = "1" ]; then
+  echo "" >&2
+  echo "WARNING: You are committing directly to '$protected_label'." >&2
+  if [ "$uses_staging_flow" = "1" ]; then
+    echo "Preferred workflow: commit on 'dev', merge to 'staging', then merge 'staging' to 'main'." >&2
+  else
+    echo "Preferred workflow: commit on 'dev', then merge to '$protected_label'." >&2
+  fi
+  echo "" >&2
+
+  if [ "$ENDCHESS_ALLOW_MAIN_COMMIT" = "1" ]; then
+    echo "(ENDCHESS_ALLOW_MAIN_COMMIT=1 — allowing commit.)" >&2
+    exit 0
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "Non-interactive commit on '$protected_label' blocked." >&2
+    echo "Use the 'dev' branch, or set ENDCHESS_ALLOW_MAIN_COMMIT=1 to override." >&2
+    exit 1
+  fi
+
+  printf "Continue anyway? [y/N] " >&2
+  read -r reply
+  case "$reply" in
+    y|Y|yes|YES) exit 0 ;;
+    *)
+      echo "Commit aborted." >&2
+      exit 1
+      ;;
+  esac
+fi
+
+exit 0
