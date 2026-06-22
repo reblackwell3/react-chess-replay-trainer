@@ -155,6 +155,7 @@ export const ReplayTrainer = ({
         </div>
 
         <HighlightChessboard
+          key={state.boardRevision}
           boardWidth={boardWidth}
           checkSquare=""
           hintSquare={null}

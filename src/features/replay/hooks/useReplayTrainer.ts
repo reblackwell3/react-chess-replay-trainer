@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fenAfterUci,
   lastMoveUciAtPly,
+  useBoardRevision,
   useTrainingMoveFeedback,
 } from 'react-chess-core';
 import { REPLAY_AUTOPLAY_STEP_MS } from '../constants';
@@ -32,6 +33,8 @@ export interface UseReplayTrainerOptions {
   onComplete?: () => void;
   /** Keep wrong moves on the board for engine refutation feedback. */
   refutationOnIncorrect?: boolean;
+  /** Pause drill input and opponent auto-play (e.g. segment recap). */
+  paused?: boolean;
 }
 
 export interface ReplayTrainerState {
@@ -59,6 +62,8 @@ export interface ReplayTrainerState {
   correctMoveSquare: string | null;
   /** Origin square of the last rejected guess (red X overlay). */
   incorrectMoveSquare: string | null;
+  /** Bump to remount the board after a rejected drop so pieces snap back immediately. */
+  boardRevision: number;
   /** FEN shown on the board (includes a pending correct-move ply). */
   displayFen: string;
   /** UCI of the move that produced the current board position. */
@@ -90,6 +95,7 @@ export function useReplayTrainer({
   onMiss,
   onComplete,
   refutationOnIncorrect = false,
+  paused = false,
 }: UseReplayTrainerOptions): ReplayTrainerState {
   const [game, setGame] = useState<ReplayGame | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +108,7 @@ export function useReplayTrainer({
   const [autoplayActive, setAutoplayActive] = useState(false);
   const [expectedUci, setExpectedUci] = useState<string | null>(null);
   const [feedbackFen, setFeedbackFen] = useState<string | null>(null);
+  const { revision: boardRevision, bumpRevision } = useBoardRevision();
   const {
     correctMoveSquare,
     incorrectMoveSquare,
@@ -282,12 +289,13 @@ export function useReplayTrainer({
   }, [complete, game, movesUci, plyIndex, recordMiss, isUserTurn]);
 
   const handleDrop = useCallback(
-    (source: string, target: string, piece: string): boolean =>
-      createDropHandler({
+    (source: string, target: string, piece: string): boolean => {
+      const accepted = createDropHandler({
         fen,
         expectedUci: movesUci[plyIndex],
         enabled:
           modeRef.current === 'train' &&
+          !paused &&
           !complete &&
           !showingCorrectMoveRef.current &&
           !showingIncorrectMoveRef.current &&
@@ -318,8 +326,15 @@ export function useReplayTrainer({
           setExpectedUci(expectedUci);
           recordMiss(plyIndex);
         },
-      })(source, target, piece),
-    [complete, createDropHandler, fen, movesUci, plyIndex, game, recordMiss, refutationOnIncorrect, sideToMove, showCorrectMove],
+      })(source, target, piece);
+
+      if (!accepted && !refutationOnIncorrect) {
+        bumpRevision();
+      }
+
+      return accepted;
+    },
+    [bumpRevision, complete, createDropHandler, fen, movesUci, plyIndex, game, paused, recordMiss, refutationOnIncorrect, sideToMove, showCorrectMove],
   );
 
   useEffect(() => {
@@ -348,7 +363,7 @@ export function useReplayTrainer({
   // In single-color drills, auto-play the opponent's reply once it's their turn
   // (e.g. after the user guesses correctly, or when training starts mid-game).
   useEffect(() => {
-    if (mode !== 'train' || complete || trainColor === 'both' || isUserTurn) {
+    if (paused || mode !== 'train' || complete || trainColor === 'both' || isUserTurn) {
       return;
     }
     if (isShowingCorrectMove || isShowingIncorrectMove) {
@@ -359,7 +374,7 @@ export function useReplayTrainer({
       clearTransient();
     }, OPPONENT_MOVE_DELAY_MS);
     return () => clearTimeout(id);
-  }, [mode, complete, trainColor, isUserTurn, plyIndex, totalPly, clearTransient, isShowingCorrectMove, isShowingIncorrectMove]);
+  }, [mode, complete, paused, trainColor, isUserTurn, plyIndex, totalPly, clearTransient, isShowingCorrectMove, isShowingIncorrectMove]);
 
   return {
     game,
@@ -378,6 +393,7 @@ export function useReplayTrainer({
     expectedUci,
     correctMoveSquare,
     incorrectMoveSquare,
+    boardRevision,
     displayFen,
     lastMoveUci,
     canPrev: plyIndex > 0,
