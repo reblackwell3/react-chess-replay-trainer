@@ -19,7 +19,7 @@ Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**
 | **Staging apps** | `endchess-frontend`, `endchess-backend` | `dev` → `staging` | `origin staging` |
 | **Everything else** | See [repos.md](repos.md) | `dev` → `main` | `origin main` |
 
-Run **commit to dev first** in every repo, then **main-group repos** (models and libraries before app repos), then **staging apps last**.
+Run **commit to dev first** in every repo, then **main-group repos** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
 
 ## Commit to dev first (every repo)
 
@@ -77,6 +77,25 @@ Use the default merge message, or:
 ```text
 Merge dev into main: <short summary>
 ```
+
+## Wait for main-group CI before staging apps
+
+After every **main-group** repo is merged and pushed to `origin main`, **stop** before touching frontend or backend. Do **not** merge `dev` → `staging` on staging apps until CI is **green** on every main-group repo you pushed in this run.
+
+Library and settings repos run **Publish** on push to `main` (build, npm publish, version bump commit). Staging Workflow on frontend/backend runs `sync-npm-pins-ci.mjs` against the registry — promoting staging apps before publish finishes leaves pins stale or breaks the build.
+
+For each main-group repo that was **merged and pushed** (not skipped):
+
+```bash
+cd <repo-path>
+gh run list --branch main --limit 1 --json databaseId,status,conclusion,workflowName
+gh run watch <run-id> --exit-status
+```
+
+- Repos with no workflow (consumers, batch jobs, etc.) — no wait; note in the report.
+- If a repo was skipped because `dev` had nothing to promote — do not wait on it.
+- If any watched run fails, **stop**; do not merge staging apps until the user fixes or retries.
+- When all applicable runs succeed, continue to **staging apps**.
 
 ## Rules (do not violate)
 
