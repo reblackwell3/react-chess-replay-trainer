@@ -22,9 +22,6 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
     blocked=1
     blocked_label="$branch"
-  elif [ "$uses_staging_flow" = "1" ] && [ "$branch" = "staging" ]; then
-    blocked=1
-    blocked_label="staging"
   fi
 
   if [ "$blocked" = "0" ]; then
@@ -34,9 +31,9 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   echo "" >&2
   echo "BLOCKED: push to '$remote/$blocked_label' is not allowed from this environment." >&2
   if [ "$uses_staging_flow" = "1" ]; then
-    echo "Protected branches: staging (staging deploy) and main (production release)." >&2
-    echo "Workflow: commit on dev → merge to staging (green CI) → PR staging to main." >&2
-    echo "Agents must not push to staging or main unless the user explicitly approved it in this conversation." >&2
+    echo "Protected branch: main (production release). Staging pushes are allowed." >&2
+    echo "Workflow: commit on dev → merge to staging → push staging → PR staging to main." >&2
+    echo "Agents must not push to main unless the user explicitly approved it in this conversation." >&2
   else
     echo "Preferred workflow: commit on dev, then merge to main when the user approves." >&2
   fi
