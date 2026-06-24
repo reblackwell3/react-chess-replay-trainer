@@ -30,14 +30,18 @@ if [ "$protected" = "1" ]; then
   fi
   echo "" >&2
 
-  if [ "$ENDCHESS_ALLOW_MAIN_COMMIT" = "1" ]; then
-    echo "(ENDCHESS_ALLOW_MAIN_COMMIT=1 — allowing commit.)" >&2
+  if [ "$ENDCHESS_OVERRIDE_PROTECTED_BRANCH" = "1" ] || \
+     [ "$ENDCHESS_ALLOW_MAIN_COMMIT" = "1" ]; then
+    if [ "$ENDCHESS_ALLOW_MAIN_COMMIT" = "1" ] && [ "$ENDCHESS_OVERRIDE_PROTECTED_BRANCH" != "1" ]; then
+      echo "(ENDCHESS_ALLOW_MAIN_COMMIT is deprecated — use ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1.)" >&2
+    fi
+    echo "(ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1 — allowing commit.)" >&2
     exit 0
   fi
 
   if [ ! -t 0 ]; then
     echo "Non-interactive commit on '$protected_label' blocked." >&2
-    echo "Use the 'dev' branch, or set ENDCHESS_ALLOW_MAIN_COMMIT=1 to override." >&2
+    echo "Use the 'dev' branch, or set ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1 to override." >&2
     exit 1
   fi
 

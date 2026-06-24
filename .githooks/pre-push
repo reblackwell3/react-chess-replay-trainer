@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# Block accidental pushes to production branches (GitHub branch protection
+# requires Pro on private repos; this is the local/agent safeguard).
+
+remote="${1:-origin}"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$remote_ref" ] && continue
+
+  branch=${remote_ref#refs/heads/}
+  root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+  repo=$(basename "$root")
+
+  uses_staging_flow=0
+  case "$repo" in
+    endchess-frontend|endchess-backend) uses_staging_flow=1 ;;
+  esac
+
+  blocked=0
+  blocked_label=""
+
+  if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+    blocked=1
+    blocked_label="$branch"
+  elif [ "$uses_staging_flow" = "1" ] && [ "$branch" = "staging" ]; then
+    blocked=1
+    blocked_label="staging"
+  fi
+
+  if [ "$blocked" = "0" ]; then
+    continue
+  fi
+
+  echo "" >&2
+  echo "BLOCKED: push to '$remote/$blocked_label' is not allowed from this environment." >&2
+  if [ "$uses_staging_flow" = "1" ]; then
+    echo "Protected branches: staging (staging deploy) and main (production release)." >&2
+    echo "Workflow: commit on dev → merge to staging (green CI) → PR staging to main." >&2
+    echo "Agents must not push to staging or main unless the user explicitly approved it in this conversation." >&2
+  else
+    echo "Preferred workflow: commit on dev, then merge to main when the user approves." >&2
+  fi
+  echo "" >&2
+
+  if [ "$ENDCHESS_OVERRIDE_PROTECTED_BRANCH" = "1" ] || \
+     [ "$ENDCHESS_ALLOW_MAIN_PUSH" = "1" ]; then
+    if [ "$ENDCHESS_ALLOW_MAIN_PUSH" = "1" ] && [ "$ENDCHESS_OVERRIDE_PROTECTED_BRANCH" != "1" ]; then
+      echo "(ENDCHESS_ALLOW_MAIN_PUSH is deprecated — use ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1.)" >&2
+    fi
+    echo "(ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1 — allowing push.)" >&2
+    continue
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "Non-interactive push to '$blocked_label' blocked." >&2
+    echo "Set ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1 only when the user explicitly requested this push." >&2
+    exit 1
+  fi
+
+  printf "Push to '%s' anyway? [y/N] " "$blocked_label" >&2
+  read -r reply
+  case "$reply" in
+    y|Y|yes|YES) ;;
+    *)
+      echo "Push aborted." >&2
+      exit 1
+      ;;
+  esac
+done
+
+exit 0
