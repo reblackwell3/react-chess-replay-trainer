@@ -12,6 +12,14 @@ disable-model-invocation: true
 
 Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**, push **`origin dev`**, and run the merges and pushes in this skill. It does **not** approve staging → main (production) for frontend or backend.
 
+## Autonomous execution
+
+When the user invokes **`/staging`** (or asks to run this skill) in their message:
+
+- **Do not** pause to ask for separate approval to commit, merge, or push — that invocation is the approval.
+- **Execute** the full skill end-to-end: **commit all safe pending work on `dev` in every repo first**, then main-group merges and pushes, wait for CI, staging-app merges and pushes.
+- **Only stop** for: secrets in the working tree, merge conflicts, CI failures, or a dirty tree that cannot be committed safely.
+
 ## Repo groups
 
 | Group | Repos | Merge | Push |
@@ -19,9 +27,11 @@ Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**
 | **Staging apps** | `endchess-frontend`, `endchess-backend` | `dev` → `staging` | `origin staging` |
 | **Everything else** | See [repos.md](repos.md) | `dev` → `main` | `origin main` |
 
-Run **commit to dev first** in every repo, then **main-group repos** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
+Run **commit to dev first** in **every** repo (complete the full scan before any merge), then **main-group repos** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
 
-## Commit to dev first (every repo)
+## Commit to dev first (every repo) — mandatory gate
+
+**Do not merge or push anything to `staging` or `main` until this step has run in every repo in [repos.md](repos.md).**
 
 Before any merges, scan every repo in [repos.md](repos.md):
 
@@ -29,18 +39,22 @@ Before any merges, scan every repo in [repos.md](repos.md):
 2. **Branch** — checkout `dev` (`git checkout dev`, or `git checkout -b dev origin/dev` if missing). Never commit on `staging` or `main`.
 3. **Uncommitted changes** — if the working tree is dirty:
    - Review `git status`, `git diff`, and untracked files.
-   - Do **not** stage secrets (`.env`, `.env.*`, credentials, `cookies.txt`, etc.); stop that repo and warn if only secrets remain.
-   - Stage everything else (`git add` relevant paths, or `git add -A` when safe).
+   - Do **not** stage secrets (`.env`, `.env.*`, credentials, `cookies.txt`, etc.); warn the user if a repo is blocked on secrets only.
+   - **Commit everything else** — all modified and untracked safe files. Prefer `git add -A`, then `git reset` secret paths if any are present.
+   - **Never cherry-pick** only “product” or code files. Agent skills (`.agents/`), cursor rules, docs, scripts, and config belong in the same commit when they are part of the pending tree.
+   - **Never skip** a repo because its changes look unrelated to another repo’s feature.
    - Commit with a concise message (1–2 sentences, focus on why).
    - `git push origin dev`
 4. **Unpushed commits** — if local `dev` is ahead of `origin/dev`, `git push origin dev`.
 5. If clean, on `dev`, and in sync with `origin/dev`, skip.
 
+After this gate, each repo should be clean except secrets-only leftovers (report those; do not merge that repo until resolved or explicitly excluded by the user).
+
 ## Pre-flight (every repo)
 
 1. `git fetch origin`
 2. Skip if `dev` has no commits ahead of the target: `git log origin/<target>..origin/dev --oneline` is empty.
-3. If the working tree is still dirty after **Commit to dev first**, stop and ask the user to stash or fix before continuing.
+3. If the working tree is still dirty after **Commit to dev first** (e.g. secrets-only or uncommittable files), stop that repo and report — do not ask for merge/push approval; only block on fixable hygiene issues.
 4. Do not merge if `dev` is behind the target without also being ahead; fetch and report if a fast-forward of `dev` is needed first.
 
 ## Merge procedure
