@@ -1,6 +1,6 @@
 {
   "name": "react-chess-replay-trainer",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "React component for browsing a chess game and drilling its moves, reporting misses (uses react-chess-core for board and analysis)",
   "license": "MIT",
   "author": "Robert Blackwell",
