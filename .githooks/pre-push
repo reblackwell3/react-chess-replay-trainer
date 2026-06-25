@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# endchess2 workspace clones (*-2): never push to staging or main.
+
+remote="${1:-origin}"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$remote_ref" ] && continue
+
+  branch=${remote_ref#refs/heads/}
+  root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+  repo=$(basename "$root")
+
+  case "$repo" in
+    *-2) ;;
+    *) exit 0 ;;
+  esac
+
+  blocked=0
+  blocked_label=""
+
+  if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+    blocked=1
+    blocked_label="$branch"
+  elif [ "$branch" = "staging" ]; then
+    blocked=1
+    blocked_label="staging"
+  fi
+
+  if [ "$blocked" = "0" ]; then
+    continue
+  fi
+
+  echo "" >&2
+  echo "BLOCKED: endchess2 workspace — push to '$remote/$blocked_label' is not allowed." >&2
+  echo "Push 'dev2' to origin/dev2. Merge dev2 into dev; use the primary endchess workspace for staging/main." >&2
+  echo "" >&2
+
+  if [ "$ENDCHESS_OVERRIDE_PROTECTED_BRANCH" = "1" ]; then
+    echo "(ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1 — allowing push.)" >&2
+    continue
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "Non-interactive push to '$blocked_label' blocked." >&2
+    exit 1
+  fi
+
+  printf "Push to '%s' anyway? [y/N] " "$blocked_label" >&2
+  read -r reply
+  case "$reply" in
+    y|Y|yes|YES) ;;
+    *)
+      echo "Push aborted." >&2
+      exit 1
+      ;;
+  esac
+done
+
+exit 0

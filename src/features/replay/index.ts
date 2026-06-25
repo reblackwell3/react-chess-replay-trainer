@@ -39,6 +39,9 @@ export {
 } from 'react-chess-core';
 export {
   getMissDisplay as getReplayMissDisplay,
+  getMissAnimationDuration,
+  isMissInputLocked,
+  resolveIncorrectMoveSquare,
   MISS_MOVE_ANIMATION_MS as REPLAY_MISS_MOVE_ANIMATION_MS,
   MISS_REFUTATION_MAX_WAIT_MS as REPLAY_MISS_REFUTATION_MAX_WAIT_MS,
   MISS_REFUTATION_PAUSE_MS as REPLAY_MISS_REFUTATION_PAUSE_MS,
