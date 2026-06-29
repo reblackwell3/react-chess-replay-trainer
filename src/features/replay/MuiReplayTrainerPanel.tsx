@@ -412,6 +412,7 @@ const MuiReplayTrainerPanel = ({
   );
 
   const stockfishScriptUrl = engine?.scriptUrl ?? puzzleEngineOptions.scriptUrl;
+  const playTimeEngine = usePlayTimeEngineOptions();
 
   const missSequence = useMissSequence(
     state.feedback,
@@ -419,6 +420,7 @@ const MuiReplayTrainerPanel = ({
     refutationEngine,
     DEFAULT_ANSWER_ARROW_COLOR,
     autoShowWrongMoves,
+    playTimeEngine.depth,
   );
 
   const segmentRecap = useReplaySegmentRecap({
@@ -893,7 +895,6 @@ const MuiReplayTrainerPanel = ({
     [stopAutoplay, stopTrainingIfActive, state.goTo],
   );
 
-  const playTimeEngine = usePlayTimeEngineOptions();
   const resolvedPlayTimeEngine = useMemo(
     () => ({
       scriptUrl: stockfishScriptUrl,
