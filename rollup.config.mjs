@@ -33,6 +33,9 @@ export default [
       'react-chessboard',
       'chess.js',
       'react-chess-core',
+      'react-chess-puzzle-kit',
+      '@mui/material',
+      '@mui/icons-material',
     ],
   },
 ];
