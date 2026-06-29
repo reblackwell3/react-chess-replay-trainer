@@ -20,8 +20,10 @@ import {
   ThemeProvider,
   HighlightChessboard,
   BoardCompleteCheckOverlay,
+  BoardGameCompleteOverlay,
   BoardYourMoveAgainOverlay,
   usePositionKeyboardNav,
+  useGameEndCompleteOverlay,
   AnalysisEngineProvider,
   DEFAULT_ANSWER_ARROW_COLOR,
   isAnalyzableFen,
@@ -440,6 +442,11 @@ const MuiReplayTrainerPanel = ({
 
   const isSegmentRecapping =
     segmentCheckVisible || segmentRecapPlaying || segmentRecap.active;
+
+  const gameCompleteOverlayVisible = useGameEndCompleteOverlay(
+    state.complete && state.totalPly > 0,
+    isSegmentRecapping,
+  );
 
   useEffect(() => {
     if (state.mode !== 'train' || segmentRecapPaused) {
@@ -1095,6 +1102,9 @@ const MuiReplayTrainerPanel = ({
                   customBoardStyle={{ borderRadius: 4 }}
                 />
                 {segmentCheckVisible && <BoardCompleteCheckOverlay />}
+                {gameCompleteOverlayVisible && !segmentCheckVisible && (
+                  <BoardGameCompleteOverlay />
+                )}
                 {segmentResumeVisible && <BoardYourMoveAgainOverlay />}
               </Box>
             </ThemeProvider>
@@ -1285,28 +1295,6 @@ const MuiReplayTrainerPanel = ({
             </>
           )}
         </Typography>
-
-        <Box
-          sx={{
-            height: 40,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            overflow: 'hidden',
-            flexShrink: 0,
-          }}
-        >
-          {state.complete && training && (
-            <Typography
-              component="span"
-              sx={{ color: 'success.main', fontWeight: 600, lineHeight: 1.25 }}
-            >
-              End of game — drill complete
-            </Typography>
-          )}
-        </Box>
         </Box>
       </Stack>
       </TrainerPanelLayout>
