@@ -422,6 +422,8 @@ const MuiReplayTrainerPanel = ({
     refutationEngine,
     DEFAULT_ANSWER_ARROW_COLOR,
     autoShowWrongMoves,
+    false,
+    null,
     playTimeEngine.depth,
   );
 
