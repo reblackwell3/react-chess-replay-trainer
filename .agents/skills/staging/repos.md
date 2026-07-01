@@ -1,4 +1,4 @@
-# Endchess monorepo — /staging repo list
+# Endchess monorepo - /staging repo list
 
 Base path: `C:/Users/rebla/code/`
 
@@ -8,6 +8,7 @@ Base path: `C:/Users/rebla/code/`
 | --- | --- |
 | endchess-frontend | `C:/Users/rebla/code/endchess-frontend` |
 | endchess-backend | `C:/Users/rebla/code/endchess-backend` |
+| endchess-workers | `C:/Users/rebla/code/endchess-workers` |
 
 ## Main repos (`dev` → `main`)
 
@@ -21,8 +22,12 @@ Run in this order when possible (dependencies flow downward).
 | react-chess-puzzle-kit | `C:/Users/rebla/code/react-chess-puzzle-kit` |
 | react-chess-replay-trainer | `C:/Users/rebla/code/react-chess-replay-trainer` |
 | endchess-api-settings | `C:/Users/rebla/code/endchess-api-settings` |
-| endchess-analysis-consumer | `C:/Users/rebla/code/endchess-analysis-consumer` |
-| endchess-import-consumer | `C:/Users/rebla/code/endchess-import-consumer` |
+| endchess-workers | `C:/Users/rebla/code/endchess-workers` |
 | endchess-batch-import | `C:/Users/rebla/code/endchess-batch-import` |
 | endchess-publisher | `C:/Users/rebla/code/endchess-publisher` |
 | endchess-course-builder | `C:/Users/rebla/code/endchess-course-builder` |
+
+## Retired (replaced by backend queue publish + endchess-workers)
+
+- endchess-import-consumer
+- endchess-analysis-consumer
