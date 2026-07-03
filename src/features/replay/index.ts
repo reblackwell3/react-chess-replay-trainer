@@ -56,16 +56,6 @@ export {
   useMissBoard as useReplayMissBoard,
 } from 'react-chess-core';
 
-export {
-  default as MuiReplayTrainerPanel,
-  type MuiReplayTrainerPanelProps,
-} from './MuiReplayTrainerPanel';
-export {
-  type MuiReplayTrainerPanelHostProps,
-  type SourceGameMeta,
-  type RecordReplayHalfMoveSeen,
-  type ReplayEntryChoice,
-} from './muiReplayTrainerHost';
 export { replaySrsModeFromSeenBefore, type ReplaySrsMode } from './replaySrs';
 export {
   REPLAY_SEGMENT_CHECK_MS,
