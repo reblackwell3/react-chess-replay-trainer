@@ -3,9 +3,11 @@ import {
   AnalysisBoard,
   AnalysisErrorBoundary,
   HighlightChessboard,
+  BoardGameCompleteOverlay,
   PlyNavigation,
   ThemeProvider,
   DEFAULT_ANSWER_ARROW_COLOR,
+  useGameEndCompleteOverlay,
   type AnalysisContext,
   type AnalysisEngineOptions,
   type BoardThemeId,
@@ -143,6 +145,10 @@ export const ReplayTrainer = ({
       : [];
 
   const draggable = training && !state.complete;
+  const gameCompleteOverlayVisible = useGameEndCompleteOverlay(
+    state.complete && state.totalPly > 0,
+    false,
+  );
 
   return (
     <ThemeProvider theme={theme} boardTheme={boardTheme}>
@@ -154,6 +160,7 @@ export const ReplayTrainer = ({
           {game.result && <span style={subtleTextStyle(colors)}>{game.result}</span>}
         </div>
 
+        <div style={{ position: 'relative', width: boardWidth, maxWidth: '100%' }}>
         <HighlightChessboard
           key={state.boardRevision}
           boardWidth={boardWidth}
@@ -182,6 +189,8 @@ export const ReplayTrainer = ({
           areArrowsAllowed={false}
           customBoardStyle={customBoardStyle}
         />
+        {gameCompleteOverlayVisible && <BoardGameCompleteOverlay />}
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <PlyNavigation
@@ -290,11 +299,6 @@ export const ReplayTrainer = ({
         </div>
 
         <div style={feedbackContainerStyle}>
-          {state.complete && training && (
-            <span style={feedbackMessageStyle(colors, 'success')}>
-              End of game — drill complete
-            </span>
-          )}
           {!state.complete && state.feedback === 'correct' && (
             <span style={feedbackMessageStyle(colors, 'success')}>Correct</span>
           )}

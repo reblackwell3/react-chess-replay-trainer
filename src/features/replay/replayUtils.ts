@@ -1,48 +1,24 @@
-import { Chess } from 'chess.js';
+import {
+  fenAtPly as fenAtPlyFromCore,
+  findPlyIndexForFen as findPlyIndexForFenFromCore,
+  normalizeFen as normalizeFenFromCore,
+} from 'react-chess-core';
 import { REPLAY_START_FEN } from './constants';
 import type { ReplaySide, TrainColor } from './types';
 
-/** Compare positions ignoring move clocks (first four FEN fields). */
-export function normalizeFen(fen: string): string {
-  return fen.trim().split(/\s+/).slice(0, 4).join(' ');
-}
+export { normalizeFenFromCore as normalizeFen };
 
-export function applyUci(chess: Chess, uci: string): void {
-  const from = uci.slice(0, 2);
-  const to = uci.slice(2, 4);
-  const promotion = uci.length > 4 ? uci[4] : undefined;
-  const move = chess.move({ from, to, promotion });
-  if (!move) {
-    throw new Error(`Illegal UCI move: ${uci}`);
-  }
-}
-
-/** FEN after applying the first `ply` moves from the standard start. */
+/** FEN after applying the first `ply` moves from the replay start position. */
 export function fenAtPly(movesUci: string[], ply: number): string {
-  const chess = new Chess(REPLAY_START_FEN);
-  for (let i = 0; i < ply && i < movesUci.length; i++) {
-    applyUci(chess, movesUci[i]);
-  }
-  return chess.fen();
+  return fenAtPlyFromCore(movesUci, ply, REPLAY_START_FEN);
 }
 
-/** Index of the next move to play to reach `targetFen`, or 0 if not found. */
+/** Index of the next move to play to reach `targetFen` from the replay start. */
 export function findPlyIndexForFen(
   movesUci: string[],
   targetFen: string,
 ): number {
-  const target = normalizeFen(targetFen);
-  const chess = new Chess(REPLAY_START_FEN);
-  if (normalizeFen(chess.fen()) === target) {
-    return 0;
-  }
-  for (let i = 0; i < movesUci.length; i++) {
-    applyUci(chess, movesUci[i]);
-    if (normalizeFen(chess.fen()) === target) {
-      return i + 1;
-    }
-  }
-  return 0;
+  return findPlyIndexForFenFromCore(movesUci, targetFen, REPLAY_START_FEN);
 }
 
 export function sideToMove(fen: string): ReplaySide {

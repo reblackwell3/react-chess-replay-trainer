@@ -56,6 +56,14 @@ export {
   useMissBoard as useReplayMissBoard,
 } from 'react-chess-core';
 
+export { replaySrsModeFromSeenBefore, type ReplaySrsMode } from './replaySrs';
+export {
+  REPLAY_SEGMENT_CHECK_MS,
+  REPLAY_SEGMENT_RECAP_INTERVAL,
+  REPLAY_SEGMENT_RESUME_MS,
+  useReplaySegmentRecap,
+} from './useReplaySegmentRecap';
+
 // Re-export analysis board from react-chess-core for host apps.
 export {
   AnalysisBoard,
