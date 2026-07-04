@@ -2,10 +2,9 @@
 
 branch=$(git symbolic-ref --short HEAD 2>/dev/null || true)
 root=$(git rev-parse --show-toplevel 2>/dev/null || true)
-repo=$(basename "$root")
 
-case "$repo" in
-  *-2) workspace=endchess2 ;;
+case "$root" in
+  */endchess2|*/endchess2/*) workspace=endchess2 ;;
   *) workspace=primary ;;
 esac
 
@@ -70,7 +69,7 @@ else
   if [ "$branch" = "dev2" ]; then
     block_commit \
       "BLOCKED: primary endchess workspace — do not commit on 'dev2'." \
-      "Commit on 'dev'. Use the endchess2 (*-2) workspace for dev2 work." \
+      "Commit on 'dev'. Use the endchess2 workspace (/Users/robert/code/endchess2) for dev2 work." \
       || exit 1
   fi
 fi
