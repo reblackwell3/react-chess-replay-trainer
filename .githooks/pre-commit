@@ -1,61 +1,77 @@
 #!/bin/sh
 
-# endchess2 workspace clones (*-2): commit feature work on dev2 only.
-
 branch=$(git symbolic-ref --short HEAD 2>/dev/null || true)
 root=$(git rev-parse --show-toplevel 2>/dev/null || true)
-repo=$(basename "$root")
 
-case "$repo" in
-  *-2) ;;
-  *) exit 0 ;;
+case "$root" in
+  */endchess2|*/endchess2/*) workspace=endchess2 ;;
+  *) workspace=primary ;;
 esac
 
-protected=0
-protected_label=""
+block_commit() {
+  title="$1"
+  hint="$2"
 
-if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-  protected=1
-  protected_label="$branch"
-elif [ "$branch" = "staging" ]; then
-  protected=1
-  protected_label="staging"
-elif [ "$branch" = "dev" ]; then
-  protected=1
-  protected_label="dev"
-fi
-
-if [ "$protected" = "1" ]; then
   echo "" >&2
-  echo "BLOCKED: endchess2 workspace — do not commit on '$protected_label'." >&2
-  echo "Commit on 'dev2'. Merge dev2 into dev when ready (primary workspace handles staging/main)." >&2
+  echo "$title" >&2
+  echo "$hint" >&2
   echo "" >&2
 
   if [ "$ENDCHESS_OVERRIDE_PROTECTED_BRANCH" = "1" ]; then
     echo "(ENDCHESS_OVERRIDE_PROTECTED_BRANCH=1 — allowing commit.)" >&2
-    exit 0
+    return 0
   fi
 
   if [ ! -t 0 ]; then
-    echo "Non-interactive commit on '$protected_label' blocked. Use branch 'dev2'." >&2
-    exit 1
+    echo "Non-interactive commit blocked." >&2
+    return 1
   fi
 
   printf "Continue anyway? [y/N] " >&2
   read -r reply
   case "$reply" in
-    y|Y|yes|YES) exit 0 ;;
+    y|Y|yes|YES) return 0 ;;
     *)
       echo "Commit aborted." >&2
-      exit 1
+      return 1
       ;;
   esac
-fi
+}
 
-if [ "$branch" != "dev2" ]; then
-  echo "" >&2
-  echo "WARNING: endchess2 workspace — expected branch 'dev2' (current: '$branch')." >&2
-  echo "" >&2
+if [ "$workspace" = "endchess2" ]; then
+  protected=0
+  protected_label=""
+
+  if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+    protected=1
+    protected_label="$branch"
+  elif [ "$branch" = "staging" ]; then
+    protected=1
+    protected_label="staging"
+  elif [ "$branch" = "dev" ]; then
+    protected=1
+    protected_label="dev"
+  fi
+
+  if [ "$protected" = "1" ]; then
+    block_commit \
+      "BLOCKED: endchess2 workspace — do not commit on '$protected_label'." \
+      "Commit on 'dev2'. Merge dev2 into dev when ready (primary workspace handles staging/main)." \
+      || exit 1
+  fi
+
+  if [ "$branch" != "dev2" ]; then
+    echo "" >&2
+    echo "WARNING: endchess2 workspace — expected branch 'dev2' (current: '$branch')." >&2
+    echo "" >&2
+  fi
+else
+  if [ "$branch" = "dev2" ]; then
+    block_commit \
+      "BLOCKED: primary endchess workspace — do not commit on 'dev2'." \
+      "Commit on 'dev'. Use the endchess2 workspace (/Users/robert/code/endchess2) for dev2 work." \
+      || exit 1
+  fi
 fi
 
 exit 0
