@@ -29,6 +29,8 @@ export interface UseReplayTrainerOptions {
   /** Position to open at (browse mode starts here). Defaults to the start. */
   startFen?: string;
   fetchGame: (gameId: string) => Promise<ReplayGame | null>;
+  /** When set, use this payload immediately instead of waiting on {@link fetchGame}. */
+  initialGame?: ReplayGame | null;
   onMiss?: (miss: ReplayMiss) => void;
   onComplete?: () => void;
   /** Keep wrong moves on the board for engine refutation feedback. */
@@ -88,10 +90,23 @@ export interface ReplayTrainerState {
   toggleAutoplay: () => void;
 }
 
+const applyLoadedGame = (
+  loaded: ReplayGame,
+  startFen: string | undefined,
+  setGame: (game: ReplayGame) => void,
+  setPlyIndex: (ply: number) => void,
+) => {
+  setGame(loaded);
+  setPlyIndex(
+    startFen ? findPlyIndexForFen(loaded.movesUci, startFen) : 0,
+  );
+};
+
 export function useReplayTrainer({
   gameId,
   startFen,
   fetchGame,
+  initialGame = null,
   onMiss,
   onComplete,
   refutationOnIncorrect = false,
@@ -136,10 +151,6 @@ export function useReplayTrainer({
   showingIncorrectMoveRef.current = isShowingIncorrectMove;
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setGame(null);
     recordedRef.current = new Set();
     completedFiredRef.current = false;
     setMode('browse');
@@ -151,6 +162,18 @@ export function useReplayTrainer({
     setExpectedUci(null);
     setAutoplayActive(false);
 
+    if (initialGame) {
+      setLoading(false);
+      setError(null);
+      applyLoadedGame(initialGame, startFen, setGame, setPlyIndex);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setGame(null);
+
     fetchGameRef
       .current(gameId)
       .then((loaded) => {
@@ -159,10 +182,7 @@ export function useReplayTrainer({
           setError('Game not found.');
           return;
         }
-        setGame(loaded);
-        setPlyIndex(
-          startFen ? findPlyIndexForFen(loaded.movesUci, startFen) : 0,
-        );
+        applyLoadedGame(loaded, startFen, setGame, setPlyIndex);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -175,7 +195,7 @@ export function useReplayTrainer({
     return () => {
       cancelled = true;
     };
-  }, [gameId, startFen]);
+  }, [gameId, initialGame, startFen]);
 
   const movesUci = useMemo(() => game?.movesUci ?? [], [game]);
   const totalPly = movesUci.length;
