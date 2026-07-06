@@ -17,8 +17,8 @@ Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**
 When the user invokes **`/staging`** (or asks to run this skill) in their message:
 
 - **Do not** pause to ask for separate approval to commit, merge, or push — that invocation is the approval.
-- **Execute** the full skill end-to-end: **commit all safe pending work on `dev` in every repo first**, then main-group merges and pushes, wait for CI, staging-app merges and pushes.
-- **Only stop** for: secrets in the working tree, merge conflicts, CI failures, or a dirty tree that cannot be committed safely.
+- **Execute** the full skill end-to-end: **commit all safe pending work on `dev` in every repo first**, **run all tests in every repo**, then main-group merges and pushes, wait for CI, staging-app merges and pushes.
+- **Only stop** for: secrets in the working tree, merge conflicts, test failures, CI failures, or a dirty tree that cannot be committed safely.
 
 ## Repo groups
 
@@ -27,7 +27,7 @@ When the user invokes **`/staging`** (or asks to run this skill) in their messag
 | **Staging apps** | `endchess-frontend`, `endchess-backend` | `dev` → `staging` | `origin staging` |
 | **Everything else** | See [repos.md](repos.md) | `dev` → `main` | `origin main` |
 
-Run **commit to dev first** in **every** repo (complete the full scan before any merge), then **main-group repos** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
+Run **commit to dev first** in **every** repo (complete the full scan before any merge), **run tests in every repo** (same order), then **main-group merges** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
 
 ## Commit to dev first (every repo) — mandatory gate
 
@@ -49,6 +49,48 @@ Before any merges, scan every repo in [repos.md](repos.md):
 5. If clean, on `dev`, and in sync with `origin/dev`, skip.
 
 After this gate, each repo should be clean except secrets-only leftovers (report those; do not merge that repo until resolved or explicitly excluded by the user).
+
+## Run tests (every repo) — mandatory gate
+
+**Do not merge or push anything to `staging` or `main` until tests pass in every repo in [repos.md](repos.md).**
+
+After **Commit to dev first** and before **Pre-flight**, verify every repo in dependency order (main-group order in [repos.md](repos.md), then staging apps).
+
+For each repo:
+
+```bash
+cd <repo-path>
+git checkout dev
+npm run prepare:deps   # when package.json defines it; skip otherwise
+```
+
+Run **every** `test*` script in `package.json` (alphabetical script-name order), except teardown helpers like `test:e2e:teardown`:
+
+```bash
+npm test
+npm run test:integration    # when present
+npm run test:e2e            # when present; use --runInBand if CI does
+```
+
+Repo-specific overrides (match CI):
+
+| Repo | Commands |
+| --- | --- |
+| endchess-backend | `npm test -- --runInBand` |
+| endchess-frontend | `npm test` then `npm run test:integration` |
+| endchess-workers | `npm test` then `npm run test:e2e -- --runInBand` |
+| endchess-batch-import | `npm test` then `npm run test:e2e -- --runInBand` |
+
+Repos with **no** `test*` scripts — run publish-CI checks instead:
+
+```bash
+npm run build
+npm run typecheck   # when present (e.g. endchess-course-builder, endchess-batch-import)
+```
+
+- **Failures** — if any command fails, **stop** the entire `/staging` run; fix tests before merging.
+- **e2e** — run when defined. If required env is missing (e.g. `MONGO_URI`), stop and report what is needed; do not merge until e2e passes or the user explicitly skips e2e for this run.
+- **node_modules** — if tests fail with missing modules, run `npm install` once in that repo and retry before treating as a real failure.
 
 ## Pre-flight (every repo)
 
@@ -124,9 +166,9 @@ gh run watch <run-id> --exit-status
 
 When finished, return a table:
 
-| Repo | Target | Result | Notes |
-| --- | --- | --- | --- |
-| … | staging/main | merged+ pushed / skipped / failed | commit range or error |
+| Repo | Tests | Target | Result | Notes |
+| --- | --- | --- | --- | --- |
+| … | pass / fail / n/a | staging/main | merged+ pushed / skipped / failed | commit range or error |
 
 Remind the user that production for frontend/backend is a separate manual step: open or merge the **staging → main** PR on GitHub after staging CI is green.
 
