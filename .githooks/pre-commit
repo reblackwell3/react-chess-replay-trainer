@@ -2,11 +2,25 @@
 
 branch=$(git symbolic-ref --short HEAD 2>/dev/null || true)
 root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+git_dir=$(git rev-parse --git-dir 2>/dev/null || true)
+repo=$(basename "$root")
 
 case "$root" in
   */endchess2|*/endchess2/*) workspace=endchess2 ;;
   *) workspace=primary ;;
 esac
+
+is_staging_app() {
+  case "$repo" in
+    endchess-frontend|endchess-backend|endchess-workers|\
+    endchess-frontend-2|endchess-backend-2|endchess-workers-2) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+is_merge_in_progress() {
+  [ -n "$git_dir" ] && [ -f "$git_dir/MERGE_HEAD" ]
+}
 
 block_commit() {
   title="$1"
@@ -72,6 +86,35 @@ else
       "Commit on 'dev'. Use the endchess2 workspace (/Users/robert/code/endchess2) for dev2 work." \
       || exit 1
   fi
+
+  case "$branch" in
+    staging)
+      if ! is_merge_in_progress; then
+        if is_staging_app; then
+          hint="Commit on 'dev', then merge dev → staging (/staging). Only merge commits belong on staging."
+        else
+          hint="Only merge commits belong on staging (no direct edits)."
+        fi
+        block_commit \
+          "BLOCKED: do not commit directly on 'staging'." \
+          "$hint" \
+          || exit 1
+      fi
+      ;;
+    main|master)
+      if ! is_merge_in_progress; then
+        if is_staging_app; then
+          hint="Production merges staging → main on GitHub (PR). Only merge commits belong on main."
+        else
+          hint="Commit on 'dev', then merge dev → main (/staging). Only merge commits belong on main."
+        fi
+        block_commit \
+          "BLOCKED: do not commit directly on '$branch'." \
+          "$hint" \
+          || exit 1
+      fi
+      ;;
+  esac
 fi
 
 exit 0

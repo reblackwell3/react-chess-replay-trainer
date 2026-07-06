@@ -22,7 +22,6 @@ Run in this order when possible (dependencies flow downward).
 | react-chess-puzzle-kit | `C:/Users/rebla/code/react-chess-puzzle-kit` |
 | react-chess-replay-trainer | `C:/Users/rebla/code/react-chess-replay-trainer` |
 | endchess-api-settings | `C:/Users/rebla/code/endchess-api-settings` |
-| endchess-workers | `C:/Users/rebla/code/endchess-workers` |
 | endchess-batch-import | `C:/Users/rebla/code/endchess-batch-import` |
 | endchess-publisher | `C:/Users/rebla/code/endchess-publisher` |
 | endchess-course-builder | `C:/Users/rebla/code/endchess-course-builder` |
