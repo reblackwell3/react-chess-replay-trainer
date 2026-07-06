@@ -3,14 +3,14 @@ name: staging
 description: >-
   Promote dev across the Endchess monorepo: commit and push pending work on dev,
   merge dev into main for library and service repos, merge dev into staging for
-  endchess-frontend and endchess-backend, then push. Use when the user invokes
+  endchess-frontend, endchess-backend, and endchess-workers, then push. Use when the user invokes
   /staging or asks to promote dev to staging/main across repos.
 disable-model-invocation: true
 ---
 
 # /staging — promote dev across repos
 
-Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**, push **`origin dev`**, and run the merges and pushes in this skill. It does **not** approve staging → main (production) for frontend or backend.
+Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**, push **`origin dev`**, and run the merges and pushes in this skill. It does **not** approve staging → main (production) for frontend, backend, or workers.
 
 ## Autonomous execution
 
@@ -24,7 +24,7 @@ When the user invokes **`/staging`** (or asks to run this skill) in their messag
 
 | Group | Repos | Merge | Push |
 | --- | --- | --- | --- |
-| **Staging apps** | `endchess-frontend`, `endchess-backend` | `dev` → `staging` | `origin staging` |
+| **Staging apps** | `endchess-frontend`, `endchess-backend`, `endchess-workers` | `dev` → `staging` | `origin staging` |
 | **Everything else** | See [repos.md](repos.md) | `dev` → `main` | `origin main` |
 
 Run **commit to dev first** in **every** repo (complete the full scan before any merge), **run tests in every repo** (same order), then **main-group merges** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
@@ -136,9 +136,9 @@ Merge dev into main: <short summary>
 
 ## Wait for main-group CI before staging apps
 
-After every **main-group** repo is merged and pushed to `origin main`, **stop** before touching frontend or backend. Do **not** merge `dev` → `staging` on staging apps until CI is **green** on every main-group repo you pushed in this run.
+After every **main-group** repo is merged and pushed to `origin main`, **stop** before touching frontend, backend, or workers. Do **not** merge `dev` → `staging` on staging apps until CI is **green** on every main-group repo you pushed in this run.
 
-Library and settings repos run **Publish** on push to `main` (build, npm publish, version bump commit). Staging Workflow on frontend/backend runs `sync-npm-pins-ci.mjs` against the registry — promoting staging apps before publish finishes leaves pins stale or breaks the build.
+Library and settings repos run **Publish** on push to `main` (build, npm publish, version bump commit). Staging Workflow on frontend, backend, and workers runs `sync-npm-pins-ci.mjs` against the registry — promoting staging apps before publish finishes leaves pins stale or breaks the build.
 
 For each main-group repo that was **merged and pushed** (not skipped):
 
@@ -155,9 +155,9 @@ gh run watch <run-id> --exit-status
 
 ## Rules (do not violate)
 
-- **Never** merge `staging` → `main` on frontend or backend (production PRs stay manual on GitHub).
+- **Never** merge `staging` → `main` on frontend, backend, or workers (production PRs stay manual on GitHub).
 - **Never** put global skip-ci keywords in merge commit messages or PR bodies (see workspace git rules).
-- **Never** push to `main` on frontend or backend — only push `staging` there.
+- **Never** push to `main` on frontend, backend, or workers — only push `staging` there.
 - Pushing `main` on other repos **is** part of `/staging` (models publish on push to `main`).
 - If a merge conflicts, stop that repo, report the conflict, and continue other repos only after the user resolves it.
 - Do not use `--no-verify` unless the user explicitly asks.
@@ -170,7 +170,7 @@ When finished, return a table:
 | --- | --- | --- | --- | --- |
 | … | pass / fail / n/a | staging/main | merged+ pushed / skipped / failed | commit range or error |
 
-Remind the user that production for frontend/backend is a separate manual step: open or merge the **staging → main** PR on GitHub after staging CI is green.
+Remind the user that production for frontend, backend, and workers is a separate manual step: open or merge the **staging → main** PR on GitHub after staging CI is green.
 
 ## Repo paths
 
