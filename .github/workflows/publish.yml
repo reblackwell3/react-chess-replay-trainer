@@ -24,7 +24,7 @@ jobs:
           cache: npm
 
       - name: Publish to npm
-        run: node scripts/publish-ci.mjs
+        run: npx endchess-npm-publish-ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
