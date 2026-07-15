@@ -1,0 +1,28 @@
+---
+description: Do not change layout without explicit user approval; call out any layout changes in bold
+alwaysApply: true
+---
+
+# No layout changes without approval
+
+Do **not** change layout, spacing, sizing, positioning, visual structure, or CSS that affects arrangement unless the user explicitly asks for a layout change or approves it first.
+
+## What counts as layout
+
+- Markup structure that affects visual arrangement (wrapping, reordering, adding/removing containers)
+- Flex/grid, gaps, padding, margin, width/height, alignment, positioning
+- Typography scale or spacing that shifts composition
+- Responsive breakpoints or viewport behavior
+- Moving UI between panels, sidebars, overlays, or regions
+
+## Allowed without asking
+
+- Logic, hooks, state, types, tests, copy tweaks that do not change visual arrangement
+- Bug fixes that restore an already-approved layout (say so briefly)
+
+## If a layout change is required or was made
+
+1. **Stop and ask for approval** before editing, unless the user already requested that exact layout change.
+2. In the response, call it out in **bold**, e.g. **LAYOUT CHANGE:** brief description of what moved/resized/restructured and where.
+
+Never silently land layout diffs.
