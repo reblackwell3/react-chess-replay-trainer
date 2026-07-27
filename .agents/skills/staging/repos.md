@@ -9,6 +9,7 @@ Base path: `C:/Users/rebla/code/`
 | endchess-frontend | `C:/Users/rebla/code/endchess-frontend` |
 | endchess-backend | `C:/Users/rebla/code/endchess-backend` |
 | endchess-workers | `C:/Users/rebla/code/endchess-workers` |
+| endchess-course-builder | `C:/Users/rebla/code/endchess-course-builder` |
 
 ## Main repos (`dev` → `main`)
 
@@ -25,7 +26,6 @@ Run in this order when possible (dependencies flow downward).
 | endchess-workers | `C:/Users/rebla/code/endchess-workers` |
 | endchess-batch-import | `C:/Users/rebla/code/endchess-batch-import` |
 | endchess-publisher | `C:/Users/rebla/code/endchess-publisher` |
-| endchess-course-builder | `C:/Users/rebla/code/endchess-course-builder` |
 
 ## Retired (replaced by backend queue publish + endchess-workers)
 

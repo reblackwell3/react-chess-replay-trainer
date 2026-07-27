@@ -3,7 +3,7 @@ name: staging
 description: >-
   Promote dev across the Endchess monorepo: commit and push pending work on dev,
   run all tests in every repo, merge dev into main for library and service repos,
-  merge dev into staging for endchess-frontend, endchess-backend, and endchess-workers,
+  merge dev into staging for endchess-frontend, endchess-backend, endchess-workers, and endchess-course-builder,
   then push and open staging → main PRs when needed. Use when the user invokes
   /staging or asks to promote dev to staging/main across repos.
 disable-model-invocation: true
@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 # /staging — promote dev across repos
 
-Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**, push **`origin dev`**, run the merges and pushes in this skill, and **open staging → main PRs** for frontend, backend, and workers when needed. It does **not** approve merging those PRs (production merge stays manual).
+Invoking **`/staging`** is explicit approval to commit pending work on **`dev`**, push **`origin dev`**, run the merges and pushes in this skill, and **open staging → main PRs** for frontend, backend, workers, and course-builder when needed. It does **not** approve merging those PRs (production merge stays manual).
 
 ## Autonomous execution
 
@@ -25,7 +25,7 @@ When the user invokes **`/staging`** (or asks to run this skill) in their messag
 
 | Group | Repos | Merge | Push |
 | --- | --- | --- | --- |
-| **Staging apps** | `endchess-frontend`, `endchess-backend`, `endchess-workers` | `dev` → `staging` | `origin staging` |
+| **Staging apps** | `endchess-frontend`, `endchess-backend`, `endchess-workers`, `endchess-course-builder` | `dev` → `staging` | `origin staging` |
 | **Everything else** | See [repos.md](repos.md) | `dev` → `main` | `origin main` |
 
 Run **commit to dev first** in **every** repo (complete the full scan before any merge), **run tests in every repo** (same order), then **main-group repos** (models and libraries before app repos), **wait for their CI**, then **staging apps last**.
@@ -156,13 +156,14 @@ gh run watch <run-id> --exit-status
 
 ## Promote staging apps (dev → staging)
 
-After main-group CI is green, merge **every** staging app in [repos.md](repos.md) — including **`endchess-workers`**. Workers is a deploy app like frontend and backend; do **not** merge `dev` → `main` there.
+After main-group CI is green, merge **every** staging app in [repos.md](repos.md) — including **`endchess-workers`** and **`endchess-course-builder`**. Workers is a deploy app like frontend and backend; course-builder is check-only CI (catalog alignment). Do **not** merge `dev` → `main` on staging apps.
 
 Run in order:
 
 1. `endchess-frontend` → `staging`
 2. `endchess-backend` → `staging`
 3. `endchess-workers` → `staging`
+4. `endchess-course-builder` → `staging`
 
 For each repo, use the merge procedure above with `<target>` = `staging` and the staging-apps merge commit message.
 
@@ -199,7 +200,7 @@ If a run fails, diagnose before touching the next repo; include the failure in t
 
 After staging-app promotion (and staging CI watches), **always** ensure an open **staging → main** PR exists for each staging app where `origin/staging` is ahead of `origin/main`. Do this even if this run skipped merging a repo (staging may already be ahead from a prior run).
 
-For each of `endchess-frontend`, `endchess-backend`, `endchess-workers`:
+For each of `endchess-frontend`, `endchess-backend`, `endchess-workers`, `endchess-course-builder`:
 
 ```bash
 cd <repo-path>
@@ -230,10 +231,10 @@ EOF
 
 ## Rules (do not violate)
 
-- **Never** merge `dev` → `main` on `endchess-frontend`, `endchess-backend`, or `endchess-workers` — those three are staging apps only (`dev` → `staging`).
-- **Never** merge `staging` → `main` on frontend, backend, or workers — **open** the PR; the user merges production.
+- **Never** merge `dev` → `main` on `endchess-frontend`, `endchess-backend`, `endchess-workers`, or `endchess-course-builder` — those are staging apps only (`dev` → `staging`).
+- **Never** merge `staging` → `main` on frontend, backend, workers, or course-builder — **open** the PR; the user merges production.
 - **Never** put global skip-ci keywords in merge commit messages or PR bodies (see workspace git rules).
-- **Never** push to `main` on frontend, backend, or workers — only push `staging` there.
+- **Never** push to `main` on frontend, backend, workers, or course-builder — only push `staging` there.
 - Pushing `main` on other repos **is** part of `/staging` (models publish on push to `main`).
 - If a merge conflicts, stop that repo, report the conflict, and continue other repos only after the user resolves it.
 - Do not use `--no-verify` unless the user explicitly asks.
